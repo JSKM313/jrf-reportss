@@ -693,14 +693,27 @@ async function compileReport(){
   const {data:rows,error}=await SB.from('reports').select('month_key,data').eq('user_id',CU);
   if(error){toast('❌ '+error.message,'#e74c3c');return}
 
-  // Filter months within period by claim-from date
+  // Period boundary by MONTH (claiming month), May counted fully.
+  // fromMonthIndex = year*12 + month of 'from'; same for 'to'.
+  const fromMI=from.getFullYear()*12+from.getMonth();
+  const toMI=to.getFullYear()*12+to.getMonth();
+
   const inRange=[];
   (rows||[]).forEach(row=>{
     const d=row.data||{};
-    const cf=parseDMY(d.m_from);
-    if(cf&&cf>=from&&cf<=to)inRange.push(d)
+    // determine claiming month index from d.mon (month name) + d.yr
+    const mIdx=MN.indexOf(d.mon);
+    const yr=parseInt(d.yr);
+    if(mIdx<0||!yr)return;
+    const itemMI=yr*12+mIdx;
+    if(itemMI>=fromMI&&itemMI<=toMI)inRange.push(d)
   });
-  inRange.sort((a,b)=>(parseDMY(a.m_from)||0)-(parseDMY(b.m_from)||0));
+  // sort by claiming month
+  inRange.sort((a,b)=>{
+    const am=MN.indexOf(a.mon)+parseInt(a.yr)*12;
+    const bm=MN.indexOf(b.mon)+parseInt(b.yr)*12;
+    return am-bm
+  });
 
   // Aggregate
   let workshops=[],pubs=[],wd=0,present=0,cl=0,dl=0,ot=0;
@@ -721,7 +734,6 @@ async function compileReport(){
 
   COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,present,cl,dl,ot,clAll,dlAll};
 
-  // Preview
   const prev=document.getElementById('reportPreview');
   prev.innerHTML=`
     <p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled ${inRange.length} monthly report(s) for ${gv('r_from')} to ${gv('r_to')}</p>
