@@ -764,54 +764,57 @@ function printAnnual(){
   if(!COMPILED){toast('Click "Compile Preview" first.','#e74c3c');return}
   const p=CP,c=COMPILED,fmt=gv('r_format');
   const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const wdManual=fN(gv('r_workdays'))||c.wd;
-  // Present = manually entered working days minus all leaves (CL + DL + Other)
-  const presentCalc=Math.max(0, wdManual - c.cl - c.dl - c.ot);
+  const wdManual=fN(gv('r_workdays'))||fN(c.wd);
+  const presentCalc=Math.max(0, wdManual - fN(c.cl) - fN(c.dl) - fN(c.ot));
   let body='';
 
   if(fmt==='annexure'){
-    body=`
-    <div style="text-align:right;font-weight:bold;font-size:13px;margin-bottom:10px">ANNEXURE-VI</div>
-    <div class="ct" style="font-weight:bold">UNIVERSITY GRANTS COMMISSION SELECTION &amp; AWARDS BUREAU</div>
-    <div class="ct" style="font-weight:bold">BAHADURSHAH ZAFAR MARG, NEW DELHI-110 002</div>
-    <div class="ct" style="font-weight:bold;margin:8px 0 16px">YEARLY PROGRESS REPORT FOR THE PERIOD W.E.F. ${esc(c.from)} TO ${esc(c.to)}</div>
-    <table style="border:none">
-      <tr><td style="border:none;width:58%;vertical-align:top">1. Name of Fellow</td><td style="border:none">: <b>${esc(p.name)}</b></td></tr>
-      <tr><td style="border:none;vertical-align:top">2. Number and date of award letter</td><td style="border:none">: <b>NTA Ref. No.: ${esc(p.awardNo)} Dated: ${esc(p.awardDate)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">3. Details of Research:</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. Topic of research</td><td style="border:none">: <b>${esc(p.topic)}</b></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">b. Is the Fellow working on the topic for the award of doctorate degree?</td><td style="border:none">: <b>Yes</b></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">c. If so, the date of resignation with the university</td><td style="border:none">: <b>${esc(p.endDate)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">4. Date of commencement of research:</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. At the University</td><td style="border:none">: <b>${esc(p.commenceUni)}</b></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">b. Under the UGC Fellowship</td><td style="border:none">: <b>${esc(p.commenceFel)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">5. Total number of working days during the period</td><td style="border:none;padding-top:6px">: <b>${dsp(wdManual)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">6. Number of days the Fellow remained on leave (with dates):</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. With fellowship, number of days: <b>${dsp(c.cl)}</b></td><td style="border:none"></td></tr>
-    </table>
-    <p style="margin:2px 0 2px 30px"><b>Casual Leave:</b> ${esc(c.clAll)||'NIL'}</p>
-    <table style="border:none">
-      <tr><td style="border:none;width:58%;padding-left:18px;vertical-align:top">b. Without Fellowship, number of days</td><td style="border:none">: <b>NIL</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">7. Number of days the Fellow remained out of station for fieldwork/travel with dates and places visited:</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. Number of days</td><td style="border:none">: <b>${dsp(c.dl)}</b></td></tr>
-    </table>
-    <p style="margin:2px 0 2px 30px">${esc(c.dlAll)||'NIL'}</p>
-    <p style="margin:2px 0 2px 18px">b. Places visited :</p>
-    <p style="margin:2px 0 2px 30px">${esc(p.places||'').replace(/\n/g,'<br>')}</p>
-    <table style="border:none">
-      <tr><td style="border:none;width:58%;padding-top:6px;vertical-align:top">8. Number of days the fellow remained present at the university/college</td><td style="border:none;padding-top:6px">: <b>${dsp(presentCalc)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">9. Published during the period under report</td><td style="border:none;padding-top:6px">: <b>${c.pubs.length}</b></td></tr>
-    </table>
-    <p style="margin:2px 0 2px 18px">Title of the article/paper (please enclose reprint of each):</p>
-    <div style="margin:2px 0 2px 30px">${c.pubs.map((x,i)=>(i+1)+'. '+esc(x.title)).join('<br>')||'NIL'}</div>
-    <p style="margin:8px 0 3px">10. Title of monograph written during the period under report: &nbsp; Teaching work done during the period under report:</p>
-    <p style="margin:2px 0 2px 18px">a. Number of periods taken per week at B.Sc.(Engg.)/B.Tech./B.E. level: <b>N/A</b></p>
-    <p style="margin:2px 0 2px 18px">b. Number of periods taken per week at M.E./M.Sc./Engg/M.Tech. level: <b>N/A</b></p>
-    <p style="margin:8px 0 0">11. A detailed account of the work done during the period (a separate sheet may be attached for the purpose):</p>
-    <p style="margin:2px 0 0">12. Comments of the supervisor on the progress of the research work during the period under report:</p>
-    <div style="display:flex;justify-content:space-between;margin-top:120px;font-weight:bold;font-size:11px">
-      <div>Signature of Awardee</div><div>Head of Department</div><div>Registrar/Principal/Director</div>
-    </div>`;
+    const pubList=c.pubs.length?c.pubs.map((x,i)=>(i+1)+'. '+esc(x.title)).join('<br>'):'NIL';
+    const clStr=esc(c.clAll)||'NIL';
+    const dlStr=esc(c.dlAll)||'NIL';
+    const places=esc(p.places||'').replace(/\n/g,'<br>');
+    body=
+    '<div style="text-align:right;font-weight:bold;font-size:13px;margin-bottom:10px">ANNEXURE-VI</div>'+
+    '<div class="ct" style="font-weight:bold">UNIVERSITY GRANTS COMMISSION SELECTION &amp; AWARDS BUREAU</div>'+
+    '<div class="ct" style="font-weight:bold">BAHADURSHAH ZAFAR MARG, NEW DELHI-110 002</div>'+
+    '<div class="ct" style="font-weight:bold;margin:8px 0 16px">YEARLY PROGRESS REPORT FOR THE PERIOD W.E.F. '+esc(c.from)+' TO '+esc(c.to)+'</div>'+
+    '<table style="border:none">'+
+      '<tr><td style="border:none;width:58%;vertical-align:top">1. Name of Fellow</td><td style="border:none">: <b>'+esc(p.name)+'</b></td></tr>'+
+      '<tr><td style="border:none;vertical-align:top">2. Number and date of award letter</td><td style="border:none">: <b>NTA Ref. No.: '+esc(p.awardNo)+' Dated: '+esc(p.awardDate)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">3. Details of Research:</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. Topic of research</td><td style="border:none">: <b>'+esc(p.topic)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">b. Is the Fellow working on the topic for the award of doctorate degree?</td><td style="border:none">: <b>Yes</b></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">c. If so, the date of resignation with the university</td><td style="border:none">: <b>'+esc(p.endDate)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">4. Date of commencement of research:</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. At the University</td><td style="border:none">: <b>'+esc(p.commenceUni)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">b. Under the UGC Fellowship</td><td style="border:none">: <b>'+esc(p.commenceFel)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">5. Total number of working days during the period</td><td style="border:none;padding-top:6px">: <b>'+dsp(wdManual)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">6. Number of days the Fellow remained on leave (with dates):</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. With fellowship, number of days: <b>'+dsp(c.cl)+'</b></td><td style="border:none"></td></tr>'+
+    '</table>'+
+    '<p style="margin:2px 0 2px 30px"><b>Casual Leave:</b> '+clStr+'</p>'+
+    '<table style="border:none">'+
+      '<tr><td style="border:none;width:58%;padding-left:18px;vertical-align:top">b. Without Fellowship, number of days</td><td style="border:none">: <b>NIL</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">7. Number of days the Fellow remained out of station for fieldwork/travel with dates and places visited:</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. Number of days</td><td style="border:none">: <b>'+dsp(c.dl)+'</b></td></tr>'+
+    '</table>'+
+    '<p style="margin:2px 0 2px 30px">'+dlStr+'</p>'+
+    '<p style="margin:2px 0 2px 18px">b. Places visited :</p>'+
+    '<p style="margin:2px 0 2px 30px">'+places+'</p>'+
+    '<table style="border:none">'+
+      '<tr><td style="border:none;width:58%;padding-top:6px;vertical-align:top">8. Number of days the fellow remained present at the university/college</td><td style="border:none;padding-top:6px">: <b>'+dsp(presentCalc)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">9. Published during the period under report</td><td style="border:none;padding-top:6px">: <b>'+c.pubs.length+'</b></td></tr>'+
+    '</table>'+
+    '<p style="margin:2px 0 2px 18px">Title of the article/paper (please enclose reprint of each):</p>'+
+    '<div style="margin:2px 0 2px 30px">'+pubList+'</div>'+
+    '<p style="margin:8px 0 3px">10. Title of monograph written during the period under report: &nbsp; Teaching work done during the period under report:</p>'+
+    '<p style="margin:2px 0 2px 18px">a. Number of periods taken per week at B.Sc.(Engg.)/B.Tech./B.E. level: <b>N/A</b></p>'+
+    '<p style="margin:2px 0 2px 18px">b. Number of periods taken per week at M.E./M.Sc./Engg/M.Tech. level: <b>N/A</b></p>'+
+    '<p style="margin:8px 0 0">11. A detailed account of the work done during the period (a separate sheet may be attached for the purpose):</p>'+
+    '<p style="margin:2px 0 0">12. Comments of the supervisor on the progress of the research work during the period under report:</p>'+
+    '<div style="display:flex;justify-content:space-between;margin-top:120px;font-weight:bold;font-size:11px">'+
+      '<div>Signature of Awardee</div><div>Head of Department</div><div>Registrar/Principal/Director</div>'+
+    '</div>';
   }else{
     body=`
     <div class="ct" style="font-weight:bold;font-size:13px">A DETAILED ACCOUNT OF WORK DONE DURING THE PERIOD</div>
