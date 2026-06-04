@@ -687,6 +687,17 @@ function leaveDates(d,kind){
   return out
 }
 
+// Format date list grouped by year like "2025 June 9, 10 FN, 2026 Feb 4"
+function fmtLeaveDates(arr){
+  arr.sort((a,b)=>a.sort-b.sort);
+  let out='',lastYear=null;
+  arr.forEach(x=>{
+    if(x.year!==lastYear){out+=(out?' ':'')+x.year+' '+x.label;lastYear=x.year}
+    else{out+=', '+x.label}
+  });
+  return out
+}
+
 async function compileReport(){
   const from=parseDMY(gv('r_from')),to=parseDMY(gv('r_to'));
   if(!from||!to){toast('Enter valid From and To dates (e.g. 25-MAY-2025).','#e74c3c');return}
@@ -716,8 +727,8 @@ async function compileReport(){
   });
 
   // Aggregate
-  let workshops=[],pubs=[],wd=0,present=0,cl=0,dl=0,ot=0;
-  const clAll=[],dlAll=[];
+  let workshops=[],pubs=[],present=0,cl=0,dl=0,ot=0;
+  let clArr=[],dlArr=[];
   inRange.forEach(d=>{
     (d.ws||[]).forEach(e=>{
       const x=e.d||{};
@@ -727,20 +738,24 @@ async function compileReport(){
       const x=e.d||{};
       pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})
     });
-    wd+=fN(d.a_wd);present+=fN(d.a_present);cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
-    leaveDates(d,'cl').forEach(x=>clAll.push(x));
-    leaveDates(d,'dl').forEach(x=>dlAll.push(x))
+    cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
+    leaveDates(d,'cl').forEach(x=>clArr.push(x));
+    leaveDates(d,'dl').forEach(x=>dlArr.push(x))
   });
 
-  COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,present,cl,dl,ot,clAll,dlAll};
+  // Working days = manually entered in report form
+  const wd=fN(gv('r_workdays'));
+  const clStr=fmtLeaveDates(clArr), dlStr=fmtLeaveDates(dlArr);
+
+  COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,cl,dl,ot,clAll:clStr,dlAll:dlStr};
 
   const prev=document.getElementById('reportPreview');
   prev.innerHTML=`
     <p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled ${inRange.length} monthly report(s) for ${gv('r_from')} to ${gv('r_to')}</p>
     <p>📊 <b>Workshops/Seminars:</b> ${workshops.length} &nbsp; <b>Publications:</b> ${pubs.length}</p>
-    <p>📅 <b>Working Days:</b> ${dsp(wd)} &nbsp; <b>Present:</b> ${dsp(present)} &nbsp; <b>CL:</b> ${dsp(cl)} &nbsp; <b>DL/FW:</b> ${dsp(dl)}</p>
-    <p style="margin-top:6px;color:#666;font-size:12px">CL dates: ${clAll.join(', ')||'—'}</p>
-    <p style="color:#666;font-size:12px">DL dates: ${dlAll.join(', ')||'—'}</p>
+    <p>📅 <b>Working Days (entered):</b> ${dsp(wd)} &nbsp; <b>CL:</b> ${dsp(cl)} &nbsp; <b>DL/FW:</b> ${dsp(dl)} &nbsp; <b>Other:</b> ${dsp(ot)}</p>
+    <p style="margin-top:6px;color:#666;font-size:12px">CL dates: ${clStr||'—'}</p>
+    <p style="color:#666;font-size:12px">DL dates: ${dlStr||'—'}</p>
     <p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>`;
   toast('✅ Compiled '+inRange.length+' month(s)')
 }
