@@ -700,65 +700,44 @@ function fmtLeaveDates(arr){
 
 async function compileReport(){
   const from=parseDMY(gv('r_from')),to=parseDMY(gv('r_to'));
-  if(!from||!to){toast('Enter valid From and To dates (e.g. 25-MAY-2025).','#e74c3c');return}
+  if(!from||!to){toast('Enter valid From and To dates.','#e74c3c');return}
   const {data:rows,error}=await SB.from('reports').select('month_key,data').eq('user_id',CU);
   if(error){toast('❌ '+error.message,'#e74c3c');return}
 
-  // Period boundary by MONTH (claiming month), May counted fully.
-  // fromMonthIndex = year*12 + month of 'from'; same for 'to'.
   const fromMI=from.getFullYear()*12+from.getMonth();
   const toMI=to.getFullYear()*12+to.getMonth();
-
   const inRange=[];
   (rows||[]).forEach(row=>{
     const d=row.data||{};
-    // determine claiming month index from d.mon (month name) + d.yr
-    const mIdx=MN.indexOf(d.mon);
-    const yr=parseInt(d.yr);
+    const mIdx=MN.indexOf(d.mon), yr=parseInt(d.yr);
     if(mIdx<0||!yr)return;
     const itemMI=yr*12+mIdx;
     if(itemMI>=fromMI&&itemMI<=toMI)inRange.push(d)
   });
-  // sort by claiming month
-  inRange.sort((a,b)=>{
-    const am=MN.indexOf(a.mon)+parseInt(a.yr)*12;
-    const bm=MN.indexOf(b.mon)+parseInt(b.yr)*12;
-    return am-bm
-  });
+  inRange.sort((a,b)=>(MN.indexOf(a.mon)+parseInt(a.yr)*12)-(MN.indexOf(b.mon)+parseInt(b.yr)*12));
 
-  // Aggregate
   let workshops=[],pubs=[],cl=0,dl=0,ot=0;
   let clArr=[],dlArr=[];
-  inRange.forEach(d=>{
-    (d.ws||[]).forEach(e=>{
-      const x=e.d||{};
-      workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})
-    });
-    (d.pub||[]).forEach(e=>{
-      const x=e.d||{};
-      pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})
-    });
+  for(let j=0;j<inRange.length;j++){
+    const d=inRange[j];
+    if(d.ws)for(let i=0;i<d.ws.length;i++){const x=d.ws[i].d||{};workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})}
+    if(d.pub)for(let i=0;i<d.pub.length;i++){const x=d.pub[i].d||{};pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})}
     cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
-    const clD=leaveDates(d,'cl');
-    const dlD=leaveDates(d,'dl');
-    for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
-    for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
-  });
+    const clD=leaveDates(d,'cl');for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
+    const dlD=leaveDates(d,'dl');for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
+  }
 
-  // Working days = manually entered in report form
   const wd=fN(gv('r_workdays'));
   const clStr=fmtLeaveDates(clArr), dlStr=fmtLeaveDates(dlArr);
-
   COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,cl,dl,ot,clAll:clStr,dlAll:dlStr};
 
-  const prev=document.getElementById('reportPreview');
-  prev.innerHTML=`
-    <p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled ${inRange.length} monthly report(s) for ${gv('r_from')} to ${gv('r_to')}</p>
-    <p>📊 <b>Workshops/Seminars:</b> ${workshops.length} &nbsp; <b>Publications:</b> ${pubs.length}</p>
-    <p>📅 <b>Working Days (entered):</b> ${dsp(wd)} &nbsp; <b>CL:</b> ${dsp(cl)} &nbsp; <b>DL/FW:</b> ${dsp(dl)} &nbsp; <b>Other:</b> ${dsp(ot)}</p>
-    <p style="margin-top:6px;color:#666;font-size:12px">CL dates: ${clStr||'—'}</p>
-    <p style="color:#666;font-size:12px">DL dates: ${dlStr||'—'}</p>
-    <p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>`;
+  document.getElementById('reportPreview').innerHTML=
+    '<p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled '+inRange.length+' monthly report(s) for '+gv('r_from')+' to '+gv('r_to')+'</p>'+
+    '<p>📊 <b>Workshops/Seminars:</b> '+workshops.length+' &nbsp; <b>Publications:</b> '+pubs.length+'</p>'+
+    '<p>📅 <b>Working Days (entered):</b> '+dsp(wd)+' &nbsp; <b>CL:</b> '+dsp(cl)+' &nbsp; <b>DL/FW:</b> '+dsp(dl)+' &nbsp; <b>Other:</b> '+dsp(ot)+'</p>'+
+    '<p style="margin-top:6px;color:#444;font-size:12px"><b>CL dates:</b> '+(clStr||'—')+'</p>'+
+    '<p style="color:#444;font-size:12px"><b>DL dates:</b> '+(dlStr||'—')+'</p>'+
+    '<p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>';
   toast('✅ Compiled '+inRange.length+' month(s)')
 }
 
