@@ -789,13 +789,13 @@ function printAnnual(){
       <tr><td style="border:none;padding-top:6px;vertical-align:top">6. Number of days the Fellow remained on leave (with dates):</td><td style="border:none"></td></tr>
       <tr><td style="border:none;padding-left:18px;vertical-align:top">a. With fellowship, number of days: <b>${dsp(c.cl)}</b></td><td style="border:none"></td></tr>
     </table>
-    <p style="margin:2px 0 2px 30px"><b>Casual Leave:</b> ${esc(c.clAll.join(', '))||'NIL'}</p>
+    <p style="margin:2px 0 2px 30px"><b>Casual Leave:</b> ${esc(c.clAll)||'NIL'}</p>
     <table style="border:none">
       <tr><td style="border:none;width:58%;padding-left:18px;vertical-align:top">b. Without Fellowship, number of days</td><td style="border:none">: <b>NIL</b></td></tr>
       <tr><td style="border:none;padding-top:6px;vertical-align:top">7. Number of days the Fellow remained out of station for fieldwork/travel with dates and places visited:</td><td style="border:none"></td></tr>
       <tr><td style="border:none;padding-left:18px;vertical-align:top">a. Number of days</td><td style="border:none">: <b>${dsp(c.dl)}</b></td></tr>
     </table>
-    <p style="margin:2px 0 2px 30px">${esc(c.dlAll.join(', '))||'NIL'}</p>
+    <p style="margin:2px 0 2px 30px">${esc(c.dlAll)||'NIL'}</p>
     <p style="margin:2px 0 2px 18px">b. Places visited :</p>
     <p style="margin:2px 0 2px 30px">${esc(p.places||'').replace(/\n/g,'<br>')}</p>
     <table style="border:none">
