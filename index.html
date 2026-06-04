@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JRF Report System</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
@@ -102,6 +102,7 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
     <input type="password" id="lp" placeholder="Password">
     <button onclick="doLogin()">Login</button>
     <div class="al">New scholar? <span onclick="showReg()">Register here</span></div>
+    <div id="sbStatus" style="text-align:center;font-size:11px;margin-top:12px;color:#999">⏳ Connecting to server...</div>
   </div>
   <div class="ab" id="regBox" style="display:none">
     <h2>Register</h2><p>Create your scholar account</p>
@@ -128,6 +129,7 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
       <button class="tab active" id="tab-dashboard" onclick="showTab('dashboard')">📋 Dashboard</button>
       <button class="tab" id="tab-profile" onclick="showTab('profile')">👤 Profile</button>
       <button class="tab" id="tab-monthly" onclick="showTab('monthly')">📝 Monthly Form</button>
+      <button class="tab" id="tab-reports" onclick="showTab('reports')">📑 Annual / 6-Month Report</button>
     </div>
 
     <div id="pane-dashboard">
@@ -158,6 +160,18 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
           <div class="fp"><label>CL availed this year (before this month)</label><input id="p_clUsed" type="number" placeholder="0" min="0" step="0.5"></div>
           <div class="fp"><label>DL/OD/FW availed this year (before this month)</label><input id="p_dlUsed" type="number" placeholder="0" min="0" step="0.5"></div>
           <div class="fp"><label>Total DL/OD/FW lifetime</label><input id="p_dlLifetime" type="number" placeholder="0" min="0" step="0.5"></div>
+        </div>
+        <div class="dv"></div>
+        <h3 style="font-size:14px;margin-bottom:10px">Annual Report Details (for Annexure VI)</h3>
+        <div class="ib">These fill the yearly/6-month reports automatically.</div>
+        <div class="fg">
+          <div class="fp"><label>Award Letter No. (NTA Ref. No.)</label><input id="p_awardNo" placeholder="220510009756"></div>
+          <div class="fp"><label>Award Letter Date</label><input id="p_awardDate" placeholder="15.11.2022"></div>
+          <div class="fp" style="grid-column:span 2"><label>Topic of Research (full title)</label><input id="p_topic" placeholder="PURCHASE DECISION AND THE INFLUENCE OF..."></div>
+          <div class="fp"><label>Date of Commencement (University)</label><input id="p_commenceUni" placeholder="25.05.2024"></div>
+          <div class="fp"><label>Date of Commencement (Fellowship)</label><input id="p_commenceFel" placeholder="25.05.2024"></div>
+          <div class="fp"><label>Expected End Date with University</label><input id="p_endDate" placeholder="24.05.2030"></div>
+          <div class="fp" style="grid-column:span 2"><label>Places Visited for Fieldwork (one per line)</label><textarea id="p_places" rows="3" placeholder="IIMK Library, Kozhikode&#10;AMAL College Library, Nilambur"></textarea></div>
         </div>
         <div class="br"><button class="btn btn-p" onclick="saveProfile()">💾 Save Profile</button></div>
       </div>
@@ -265,9 +279,35 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
         </div>
       </div>
     </div>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
+    <div id="pane-reports" style="display:none">
+      <div class="cd">
+        <h3>📑 Annual / 6-Month Progress Report</h3>
+        <div class="ib">Auto-compiles from all your saved monthly reports in the chosen period. Annual period runs <b>25 May to 24 May</b>. Fill profile's "Annual Report Details" first.</div>
+        <div class="br" style="margin-top:0;margin-bottom:12px">
+          <button class="btn btn-i" onclick="setAnnualPeriod()">📅 Set Annual Period (25 May – 24 May)</button>
+        </div>
+        <div class="fg">
+          <div class="fp"><label>Period From</label><input id="r_from" placeholder="25-MAY-2025"></div>
+          <div class="fp"><label>Period To</label><input id="r_to" placeholder="24-MAY-2026"></div>
+          <div class="fp"><label>Report Type</label>
+            <select id="r_type"><option value="annual">Annual (Annexure VI)</option><option value="sixmonth">Six-Month Report</option></select>
+          </div>
+          <div class="fp"><label>Format</label>
+            <select id="r_format"><option value="annexure">Annexure VI format</option><option value="detailed">Detailed-account format</option></select>
+          </div>
+          <div class="fp"><label>Total Working Days (enter manually)</label><input id="r_workdays" type="number" placeholder="267"></div>
+          <div class="fp"><label>Reviews — Articles count</label><input id="r_articles" placeholder="90"></div>
+          <div class="fp"><label>Reviews — Thesis count</label><input id="r_thesis" placeholder="7"></div>
+          <div class="fp" style="grid-column:span 2"><label>Review of Literature — area</label><input id="r_revarea" placeholder="Buying Behavior, Residential Satisfaction"></div>
+        </div>
+        <div class="br">
+          <button class="btn btn-i" onclick="compileReport()">🔄 Compile Preview</button>
+          <button class="btn btn-i" onclick="printAnnual()">🖨 Print / PDF</button>
+        </div>
+        <div class="dv"></div>
+        <div id="reportPreview" style="background:#fafcff;border:1px solid #dce6f0;border-radius:8px;padding:16px;font-size:13px;min-height:60px">Click "Compile Preview" to gather data from your monthly reports.</div>
+      </div>
+    </div>
 
 <script>
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -277,10 +317,30 @@ const TL={'cl-fn':'CL FN','cl-an':'CL AN','cl-full':'CL Full','dl-fn':'DL FN','d
 const TC={'cl-fn':'t1','cl-an':'t2','cl-full':'t3','dl-fn':'t4','dl-an':'t5','dl-full':'t6','ot-fn':'t7','ot-an':'t8','ot-full':'t9'};
 const TCL=30;
 // ===== SUPABASE SETUP =====
-const SB = supabase.createClient(
-  'https://sxnsbpbaivuyjqbsjpuj.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4bnNicGJhaXZ1eWpxYnNqcHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MTI5NjUsImV4cCI6MjA5NjA4ODk2NX0.MIuYs3VU7__k7An0iiIH2Td6Yg4aRX3spLplj0zDUj4'
-);
+const SUPABASE_URL='https://sxnsbpbaivuyjqbsjpuj.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4bnNicGJhaXZ1eWpxYnNqcHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MTI5NjUsImV4cCI6MjA5NjA4ODk2NX0.MIuYs3VU7__k7An0iiIH2Td6Yg4aRX3spLplj0zDUj4';
+let SB=null;
+
+function initSB(){
+  if(window.supabase&&window.supabase.createClient){
+    SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    const s=document.getElementById('sbStatus');
+    if(s){s.textContent='✅ Connected — ready to login';s.style.color='#27ae60'}
+    return true;
+  }
+  return false;
+}
+// Try to init immediately, retry if library not loaded yet
+if(!initSB()){
+  let tries=0;
+  const iv=setInterval(()=>{
+    tries++;
+    if(initSB()||tries>40){
+      clearInterval(iv);
+      if(!SB){const s=document.getElementById('sbStatus');if(s){s.textContent='❌ Could not load server library (blocked in preview — works when hosted)';s.style.color='#e74c3c'}}
+    }
+  },150);
+}
 
 let CU=null,EM=null,CP={},CUEMAIL='';
 let lv={},calM=null,calY=null;
@@ -302,32 +362,38 @@ function showReg(){document.getElementById('loginBox').style.display='none';docu
 function showLogin(){document.getElementById('regBox').style.display='none';document.getElementById('loginBox').style.display='block'}
 
 async function doRegister(){
+  if(!SB&&!initSB()){document.getElementById('regErr').textContent='Connecting to server… please wait 3 seconds and try again.';return}
   const email=document.getElementById('ru').value.trim(),pass=document.getElementById('rp').value,pass2=document.getElementById('rp2').value;
   const err=document.getElementById('regErr');
   if(!email||!pass){err.textContent='Fill all fields.';return}
+  if(pass.length<6){err.textContent='Password must be at least 6 characters.';return}
   if(pass!==pass2){err.textContent='Passwords do not match.';return}
   err.textContent='Creating account...';
-  const {error}=await SB.auth.signUp({email,password:pass});
-  if(error){err.textContent=error.message;return}
-  toast('Account created! Please login.');showLogin();
-  err.textContent=''
+  try{
+    const {error}=await SB.auth.signUp({email,password:pass});
+    if(error){err.textContent=error.message;return}
+    toast('Account created! Please login.');showLogin();err.textContent=''
+  }catch(e){err.textContent='Error: '+e.message}
 }
 
 async function doLogin(){
+  if(!SB&&!initSB()){document.getElementById('loginErr').textContent='Connecting to server… please wait 3 seconds and try again.';return}
   const email=document.getElementById('lu').value.trim(),pass=document.getElementById('lp').value;
   const err=document.getElementById('loginErr');
   if(!email||!pass){err.textContent='Fill all fields.';return}
   err.textContent='Logging in...';
-  const {data,error}=await SB.auth.signInWithPassword({email,password:pass});
-  if(error){err.textContent=error.message;return}
-  err.textContent='';
-  CU=data.user.id;CUEMAIL=email;
-  const {data:prof}=await SB.from('profiles').select('data').eq('id',CU).maybeSingle();
-  CP=(prof&&prof.data)?prof.data:{};
-  document.getElementById('authWrap').style.display='none';
-  document.getElementById('appWrap').style.display='block';
-  document.getElementById('topName').textContent='👤 '+email;
-  showTab('dashboard');loadDash()
+  try{
+    const {data,error}=await SB.auth.signInWithPassword({email,password:pass});
+    if(error){err.textContent=error.message;return}
+    err.textContent='';
+    CU=data.user.id;CUEMAIL=email;
+    const {data:prof}=await SB.from('profiles').select('data').eq('id',CU).maybeSingle();
+    CP=(prof&&prof.data)?prof.data:{};
+    document.getElementById('authWrap').style.display='none';
+    document.getElementById('appWrap').style.display='block';
+    document.getElementById('topName').textContent='👤 '+email;
+    showTab('dashboard');loadDash()
+  }catch(e){err.textContent='Error: '+e.message}
 }
 
 async function doLogout(){
@@ -340,7 +406,7 @@ async function doLogout(){
 
 // TABS
 function showTab(t){
-  ['dashboard','profile','monthly'].forEach(id=>{
+  ['dashboard','profile','monthly','reports'].forEach(id=>{
     document.getElementById('pane-'+id).style.display=id===t?'block':'none';
     document.getElementById('tab-'+id).classList.toggle('active',id===t)
   });
@@ -349,7 +415,7 @@ function showTab(t){
 }
 
 // PROFILE
-const PK=['name','id','supervisor','dept','regdate','scheme','fellowFrom','fellowTo','fellowship','hra','contingency','escort','clUsed','dlUsed','dlLifetime'];
+const PK=['name','id','supervisor','dept','regdate','scheme','fellowFrom','fellowTo','fellowship','hra','contingency','escort','clUsed','dlUsed','dlLifetime','awardNo','awardDate','topic','commenceUni','commenceFel','endDate','places'];
 function loadProf(){PK.forEach(k=>{const e=document.getElementById('p_'+k);if(e&&CP[k]!==undefined)e.value=CP[k]})}
 async function saveProfile(){
   const d={};PK.forEach(k=>{d[k]=gv('p_'+k)});
@@ -576,7 +642,197 @@ function renderA(sec){
 function loadA(sec,entries){A[sec].e=entries||[];renderA(sec)}
 function getAT(sec){return A[sec].e.map((e,i)=>(i+1)+'. '+gs(e.t,e.d)).join(' ')}
 
-// PRINT — exact jrf_form.html layout
+// ===== ANNUAL / 6-MONTH REPORT =====
+let COMPILED=null;
+
+function setAnnualPeriod(){
+  // Determine fellowship-year. If we're in/after July, the year that just ended is current_year-1 to current_year.
+  const today=new Date();
+  let startYear=today.getFullYear();
+  // Annual year runs 25 May (startYear) to 24 May (startYear+1).
+  // If today is before 25 May, the most recent completed year started the previous year.
+  const may25=new Date(startYear,4,25);
+  if(today<may25)startYear=startYear-1;
+  // If reporting in July for the year that ended 24 May this year, start = last year's 25 May... 
+  // Use the year that just COMPLETED on 24 May.
+  // Completed year = (startYear-1)-May-25 to startYear-May-24  when today is after 24 May.
+  const sFrom=(startYear-1)+'';
+  sv('r_from','25-MAY-'+(startYear-1));
+  sv('r_to','24-MAY-'+startYear);
+  toast('📅 Period set: 25-MAY-'+(startYear-1)+' to 24-MAY-'+startYear)
+}
+
+function parseDMY(s){
+  // accepts "25-MAY-2025" or "25.05.2024"
+  if(!s)return null;
+  s=s.trim();
+  const mm={JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
+  let m=s.match(/^(\d{1,2})[-\/. ]([A-Za-z]{3,})[-\/. ](\d{4})$/);
+  if(m){const mo=mm[m[2].slice(0,3).toUpperCase()];if(mo!==undefined)return new Date(+m[3],mo,+m[1])}
+  m=s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  if(m)return new Date(+m[3],+m[2]-1,+m[1]);
+  return null
+}
+
+// Convert calendar lv {day: 'cl-fn'...} + month/year into list of date strings
+function leaveDates(d,kind){
+  // kind 'cl' or 'dl'
+  if(!d.lv||d.calM===undefined||d.calM===null)return [];
+  const out=[];
+  Object.keys(d.lv).sort((a,b)=>a-b).forEach(day=>{
+    const v=d.lv[day];if(!v||!v.startsWith(kind))return;
+    const half=v.endsWith('-fn')?' FN':v.endsWith('-an')?' AN':'';
+    out.push(MS[d.calM].charAt(0)+MS[d.calM].slice(1).toLowerCase()+' '+day+half)
+  });
+  return out
+}
+
+async function compileReport(){
+  const from=parseDMY(gv('r_from')),to=parseDMY(gv('r_to'));
+  if(!from||!to){toast('Enter valid From and To dates (e.g. 25-MAY-2025).','#e74c3c');return}
+  const {data:rows,error}=await SB.from('reports').select('month_key,data').eq('user_id',CU);
+  if(error){toast('❌ '+error.message,'#e74c3c');return}
+
+  // Filter months within period by claim-from date
+  const inRange=[];
+  (rows||[]).forEach(row=>{
+    const d=row.data||{};
+    const cf=parseDMY(d.m_from);
+    if(cf&&cf>=from&&cf<=to)inRange.push(d)
+  });
+  inRange.sort((a,b)=>(parseDMY(a.m_from)||0)-(parseDMY(b.m_from)||0));
+
+  // Aggregate
+  let workshops=[],pubs=[],wd=0,present=0,cl=0,dl=0,ot=0;
+  const clAll=[],dlAll=[];
+  inRange.forEach(d=>{
+    (d.ws||[]).forEach(e=>{
+      const x=e.d||{};
+      workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})
+    });
+    (d.pub||[]).forEach(e=>{
+      const x=e.d||{};
+      pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})
+    });
+    wd+=fN(d.a_wd);present+=fN(d.a_present);cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
+    leaveDates(d,'cl').forEach(x=>clAll.push(x));
+    leaveDates(d,'dl').forEach(x=>dlAll.push(x))
+  });
+
+  COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,present,cl,dl,ot,clAll,dlAll};
+
+  // Preview
+  const prev=document.getElementById('reportPreview');
+  prev.innerHTML=`
+    <p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled ${inRange.length} monthly report(s) for ${gv('r_from')} to ${gv('r_to')}</p>
+    <p>📊 <b>Workshops/Seminars:</b> ${workshops.length} &nbsp; <b>Publications:</b> ${pubs.length}</p>
+    <p>📅 <b>Working Days:</b> ${dsp(wd)} &nbsp; <b>Present:</b> ${dsp(present)} &nbsp; <b>CL:</b> ${dsp(cl)} &nbsp; <b>DL/FW:</b> ${dsp(dl)}</p>
+    <p style="margin-top:6px;color:#666;font-size:12px">CL dates: ${clAll.join(', ')||'—'}</p>
+    <p style="color:#666;font-size:12px">DL dates: ${dlAll.join(', ')||'—'}</p>
+    <p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>`;
+  toast('✅ Compiled '+inRange.length+' month(s)')
+}
+
+function printAnnual(){
+  if(!COMPILED){toast('Click "Compile Preview" first.','#e74c3c');return}
+  const p=CP,c=COMPILED,fmt=gv('r_format');
+  const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const wdManual=gv('r_workdays')||dsp(c.wd);
+  let body='';
+
+  if(fmt==='annexure'){
+    body=`
+    <div style="text-align:right;font-weight:bold;font-size:13px;margin-bottom:10px">ANNEXURE-VI</div>
+    <div class="ct" style="font-weight:bold">UNIVERSITY GRANTS COMMISSION SELECTION &amp; AWARDS BUREAU</div>
+    <div class="ct" style="font-weight:bold">BAHADURSHAH ZAFAR MARG, NEW DELHI-110 002</div>
+    <div class="ct" style="font-weight:bold;margin:8px 0 16px">YEARLY PROGRESS REPORT FOR THE PERIOD W.E.F. ${esc(c.from)} TO ${esc(c.to)}</div>
+    <table style="border:none">
+      <tr><td style="border:none;width:58%;vertical-align:top">1. Name of Fellow</td><td style="border:none">: <b>${esc(p.name)}</b></td></tr>
+      <tr><td style="border:none;vertical-align:top">2. Number and date of award letter</td><td style="border:none">: <b>NTA Ref. No.: ${esc(p.awardNo)} Dated: ${esc(p.awardDate)}</b></td></tr>
+      <tr><td style="border:none;padding-top:6px;vertical-align:top">3. Details of Research:</td><td style="border:none"></td></tr>
+      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. Topic of research</td><td style="border:none">: <b>${esc(p.topic)}</b></td></tr>
+      <tr><td style="border:none;padding-left:18px;vertical-align:top">b. Is the Fellow working on the topic for the award of doctorate degree?</td><td style="border:none">: <b>Yes</b></td></tr>
+      <tr><td style="border:none;padding-left:18px;vertical-align:top">c. If so, the date of resignation with the university</td><td style="border:none">: <b>${esc(p.endDate)}</b></td></tr>
+      <tr><td style="border:none;padding-top:6px;vertical-align:top">4. Date of commencement of research:</td><td style="border:none"></td></tr>
+      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. At the University</td><td style="border:none">: <b>${esc(p.commenceUni)}</b></td></tr>
+      <tr><td style="border:none;padding-left:18px;vertical-align:top">b. Under the UGC Fellowship</td><td style="border:none">: <b>${esc(p.commenceFel)}</b></td></tr>
+      <tr><td style="border:none;padding-top:6px;vertical-align:top">5. Total number of working days during the period</td><td style="border:none;padding-top:6px">: <b>${esc(wdManual)}</b></td></tr>
+      <tr><td style="border:none;padding-top:6px;vertical-align:top">6. Number of days the Fellow remained on leave (with dates):</td><td style="border:none"></td></tr>
+      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. With fellowship, number of days: <b>${dsp(c.cl)}</b></td><td style="border:none"></td></tr>
+    </table>
+    <p style="margin:2px 0 2px 30px"><b>Casual Leave:</b> ${esc(c.clAll.join(', '))||'NIL'}</p>
+    <table style="border:none">
+      <tr><td style="border:none;width:58%;padding-left:18px;vertical-align:top">b. Without Fellowship, number of days</td><td style="border:none">: <b>NIL</b></td></tr>
+      <tr><td style="border:none;padding-top:6px;vertical-align:top">7. Number of days the Fellow remained out of station for fieldwork/travel with dates and places visited:</td><td style="border:none"></td></tr>
+      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. Number of days</td><td style="border:none">: <b>${dsp(c.dl)}</b></td></tr>
+    </table>
+    <p style="margin:2px 0 2px 30px">${esc(c.dlAll.join(', '))||'NIL'}</p>
+    <p style="margin:2px 0 2px 18px">b. Places visited :</p>
+    <p style="margin:2px 0 2px 30px">${esc(p.places||'').replace(/\n/g,'<br>')}</p>
+    <table style="border:none">
+      <tr><td style="border:none;width:58%;padding-top:6px;vertical-align:top">8. Number of days the fellow remained present at the university/college</td><td style="border:none;padding-top:6px">: <b>${dsp(c.present)}</b></td></tr>
+      <tr><td style="border:none;padding-top:6px;vertical-align:top">9. Published during the period under report</td><td style="border:none;padding-top:6px">: <b>${c.pubs.length}</b></td></tr>
+    </table>
+    <p style="margin:2px 0 2px 18px">Title of the article/paper (please enclose reprint of each):</p>
+    <div style="margin:2px 0 2px 30px">${c.pubs.map((x,i)=>(i+1)+'. '+esc(x.title)).join('<br>')||'NIL'}</div>
+    <p style="margin:8px 0 3px">10. Title of monograph written during the period under report: &nbsp; Teaching work done during the period under report:</p>
+    <p style="margin:2px 0 2px 18px">a. Number of periods taken per week at B.Sc.(Engg.)/B.Tech./B.E. level: <b>N/A</b></p>
+    <p style="margin:2px 0 2px 18px">b. Number of periods taken per week at M.E./M.Sc./Engg/M.Tech. level: <b>N/A</b></p>
+    <p style="margin:10px 0 3px">11. A detailed account of the work done during the period (a separate sheet may be attached for the purpose):</p>
+    <div style="height:72px"></div>
+    <p style="margin:10px 0 3px">12. Comments of the supervisor on the progress of the research work during the period under report:</p>
+    <div style="height:120px"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:20px;font-weight:bold;font-size:11px">
+      <div>Signature of Awardee</div><div>Head of Department</div><div>Registrar/Principal/Director</div>
+    </div>`;
+  }else{
+    body=`
+    <div class="ct" style="font-weight:bold;font-size:13px">A DETAILED ACCOUNT OF WORK DONE DURING THE PERIOD</div>
+    <div class="ct" style="font-weight:bold;margin:4px 0 12px">(From ${esc(c.from)} to ${esc(c.to)})</div>
+    <p style="margin:4px 0"><b>Name of the Scholar:</b> ${esc(p.name)}</p>
+    <p style="margin:4px 0"><b>Title of Research:</b> ${esc(p.topic)}</p>
+    <p style="margin:8px 0 4px"><b>ACTIVITIES DURING THE PERIOD:</b> ${esc(c.from)} to ${esc(c.to)}</p>
+    <p style="margin:14px 0 6px;font-weight:bold">WORKSHOPS / SEMINARS / WEBINARS AND CONFERENCES ATTENDED</p>
+    <table>
+      <tr><th class="ath" style="width:7%">SL No</th><th class="ath">Topic</th><th class="ath" style="width:18%">Date</th><th class="ath" style="width:26%">Name of the Institution</th></tr>
+      ${c.workshops.map((w,i)=>'<tr><td class="atd">'+(i+1)+'</td><td>'+esc(w.topic)+'</td><td class="atd">'+esc(w.date)+'</td><td>'+esc(w.inst)+'</td></tr>').join('')}
+    </table>
+    <p style="margin:14px 0 6px;font-weight:bold">PUBLICATION</p>
+    <table>
+      <tr><th class="ath" style="width:7%">SL No</th><th class="ath">Topic</th><th class="ath" style="width:20%">ISSN/ISBN</th><th class="ath" style="width:28%">Journal/Institution</th></tr>
+      ${c.pubs.map((x,i)=>'<tr><td class="atd">'+(i+1)+'</td><td><b>'+esc(x.title)+'</b></td><td class="atd">'+esc(x.issn)+'</td><td>'+esc(x.journal)+'</td></tr>').join('')}
+    </table>
+    <p style="margin:14px 0 6px;font-weight:bold">REVIEW OF LITERATURE</p>
+    <p style="margin:4px 0">${esc(gv('r_articles')||'')} Articles and ${esc(gv('r_thesis')||'')} thesis were reviewed during this period in the area of ${esc(gv('r_revarea')||'')}</p>
+    <p style="margin:14px 0 6px;font-weight:bold">FIELD VISIT</p>
+    <div style="height:50px"></div>
+    <p style="margin:14px 0 6px;font-weight:bold">ATTENDANCE</p>
+    <p style="margin:4px 0">Consolidated attendance during the period ${esc(c.from)} to ${esc(c.to)}</p>
+    <table>
+      <tr><th class="ath">Total no of working days</th><th class="ath">Total attendance</th><th class="ath">Casual leave</th><th class="ath">Duty leave</th><th class="ath">Medical leave</th></tr>
+      <tr><td class="atd">${esc(wdManual)}</td><td class="atd">${dsp(c.present)}</td><td class="atd">${dsp(c.cl)}</td><td class="atd">${dsp(c.dl)}</td><td class="atd">${dsp(c.ot)}</td></tr>
+    </table>`;
+  }
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Report</title><style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Times New Roman',serif;font-size:12px;padding:24px 30px;color:#000;line-height:1.5}
+    .ct{text-align:center}
+    table{width:100%;border-collapse:collapse;margin:6px 0}
+    td,th{border:1px solid #000;padding:4px 6px;vertical-align:top;font-size:11px}
+    .ath{font-weight:bold;text-align:center;background:#f5f5f5}
+    .atd{text-align:center}
+    @page{size:A4;margin:14mm}
+  </style></head><body>${body}</body></html>`;
+  const b=new Blob([html],{type:'text/html'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');
+  a.href=u;a.download=(gv('r_type')==='annual'?'Annual':'SixMonth')+'_'+(fmt==='annexure'?'AnnexureVI':'Detailed')+'_'+esc(c.from)+'.html';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(u)},100);
+  toast('✅ Downloaded! Open file → Ctrl+P → Save as PDF')
+}
+// PRINT MONTHLY — exact jrf_form.html layout
 function doPrint(){
   const p=CP,r=id=>gv(id);
   const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
