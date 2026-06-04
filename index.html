@@ -302,7 +302,7 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
         </div>
         <div class="br">
           <button class="btn btn-i" onclick="compileReport()">🔄 Compile Preview</button>
-          <button class="btn btn-i" onclick="printAnnual()">🖨 Print / PDF</button>
+          <button class="btn btn-i" onclick="printAnnual()">🖨 Print / PDF (Annexure or Detailed)</button>
         </div>
         <div class="dv"></div>
         <div id="reportPreview" style="background:#fafcff;border:1px solid #dce6f0;border-radius:8px;padding:16px;font-size:13px;min-height:60px">Click "Compile Preview" to gather data from your monthly reports.</div>
@@ -687,114 +687,118 @@ function leaveDates(d,kind){
   return out
 }
 
+// Format date list grouped by year like "2025 June 9, 10 FN, 2026 Feb 4"
+function fmtLeaveDates(arr){
+  arr.sort((a,b)=>a.sort-b.sort);
+  let out='',lastYear=null;
+  arr.forEach(x=>{
+    if(x.year!==lastYear){out+=(out?' ':'')+x.year+' '+x.label;lastYear=x.year}
+    else{out+=', '+x.label}
+  });
+  return out
+}
+
 async function compileReport(){
+  try{
   const from=parseDMY(gv('r_from')),to=parseDMY(gv('r_to'));
-  if(!from||!to){toast('Enter valid From and To dates (e.g. 25-MAY-2025).','#e74c3c');return}
+  if(!from||!to){toast('Enter valid From and To dates.','#e74c3c');return}
   const {data:rows,error}=await SB.from('reports').select('month_key,data').eq('user_id',CU);
   if(error){toast('❌ '+error.message,'#e74c3c');return}
 
-  // Period boundary by MONTH (claiming month), May counted fully.
-  // fromMonthIndex = year*12 + month of 'from'; same for 'to'.
   const fromMI=from.getFullYear()*12+from.getMonth();
   const toMI=to.getFullYear()*12+to.getMonth();
-
   const inRange=[];
   (rows||[]).forEach(row=>{
     const d=row.data||{};
-    // determine claiming month index from d.mon (month name) + d.yr
-    const mIdx=MN.indexOf(d.mon);
-    const yr=parseInt(d.yr);
+    const mIdx=MN.indexOf(d.mon), yr=parseInt(d.yr);
     if(mIdx<0||!yr)return;
     const itemMI=yr*12+mIdx;
     if(itemMI>=fromMI&&itemMI<=toMI)inRange.push(d)
   });
-  // sort by claiming month
-  inRange.sort((a,b)=>{
-    const am=MN.indexOf(a.mon)+parseInt(a.yr)*12;
-    const bm=MN.indexOf(b.mon)+parseInt(b.yr)*12;
-    return am-bm
-  });
+  inRange.sort((a,b)=>(MN.indexOf(a.mon)+parseInt(a.yr)*12)-(MN.indexOf(b.mon)+parseInt(b.yr)*12));
 
-  // Aggregate
-  let workshops=[],pubs=[],wd=0,present=0,cl=0,dl=0,ot=0;
-  const clAll=[],dlAll=[];
-  inRange.forEach(d=>{
-    (d.ws||[]).forEach(e=>{
-      const x=e.d||{};
-      workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})
-    });
-    (d.pub||[]).forEach(e=>{
-      const x=e.d||{};
-      pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})
-    });
-    wd+=fN(d.a_wd);present+=fN(d.a_present);cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
-    leaveDates(d,'cl').forEach(x=>clAll.push(x));
-    leaveDates(d,'dl').forEach(x=>dlAll.push(x))
-  });
+  let workshops=[],pubs=[],cl=0,dl=0,ot=0;
+  let clArr=[],dlArr=[];
+  for(let j=0;j<inRange.length;j++){
+    const d=inRange[j];
+    if(d.ws)for(let i=0;i<d.ws.length;i++){const x=d.ws[i].d||{};workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})}
+    if(d.pub)for(let i=0;i<d.pub.length;i++){const x=d.pub[i].d||{};pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})}
+    cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
+    const clD=getLeaves(d,'cl');for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
+    const dlD=getLeaves(d,'dl');for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
+  }
 
-  COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,present,cl,dl,ot,clAll,dlAll};
+  const wd=fN(gv('r_workdays'));
+  const clStr=formatLeaves(clArr), dlStr=formatLeaves(dlArr);
+  COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,cl,dl,ot,clAll:clStr,dlAll:dlStr};
 
-  const prev=document.getElementById('reportPreview');
-  prev.innerHTML=`
-    <p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled ${inRange.length} monthly report(s) for ${gv('r_from')} to ${gv('r_to')}</p>
-    <p>📊 <b>Workshops/Seminars:</b> ${workshops.length} &nbsp; <b>Publications:</b> ${pubs.length}</p>
-    <p>📅 <b>Working Days:</b> ${dsp(wd)} &nbsp; <b>Present:</b> ${dsp(present)} &nbsp; <b>CL:</b> ${dsp(cl)} &nbsp; <b>DL/FW:</b> ${dsp(dl)}</p>
-    <p style="margin-top:6px;color:#666;font-size:12px">CL dates: ${clAll.join(', ')||'—'}</p>
-    <p style="color:#666;font-size:12px">DL dates: ${dlAll.join(', ')||'—'}</p>
-    <p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>`;
+  document.getElementById('reportPreview').innerHTML=
+    '<p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled '+inRange.length+' monthly report(s) for '+gv('r_from')+' to '+gv('r_to')+'</p>'+
+    '<p>📊 <b>Workshops/Seminars:</b> '+workshops.length+' &nbsp; <b>Publications:</b> '+pubs.length+'</p>'+
+    '<p>📅 <b>Working Days (entered):</b> '+dsp(wd)+' &nbsp; <b>CL:</b> '+dsp(cl)+' &nbsp; <b>DL/FW:</b> '+dsp(dl)+' &nbsp; <b>Other:</b> '+dsp(ot)+'</p>'+
+    '<p style="margin-top:6px;color:#444;font-size:12px"><b>CL dates:</b> '+(clStr||'—')+'</p>'+
+    '<p style="color:#444;font-size:12px"><b>DL dates:</b> '+(dlStr||'—')+'</p>'+
+    '<p style="margin:10px 0 0;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>';
   toast('✅ Compiled '+inRange.length+' month(s)')
+  }catch(e){toast('❌ Compile error: '+e.message,'#e74c3c');console.error(e)}
 }
 
 function printAnnual(){
   if(!COMPILED){toast('Click "Compile Preview" first.','#e74c3c');return}
-  const p=CP,c=COMPILED,fmt=gv('r_format');
-  const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const wdManual=gv('r_workdays')||dsp(c.wd);
+  try{
+  const p=CP||{},c=COMPILED,fmt=gv('r_format');
+  const esc=s=>String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const wdManual=fN(gv('r_workdays'))||fN(c.wd);
+  const presentCalc=Math.max(0, wdManual - fN(c.cl) - fN(c.dl) - fN(c.ot));
   let body='';
 
   if(fmt==='annexure'){
-    body=`
-    <div style="text-align:right;font-weight:bold;font-size:13px;margin-bottom:10px">ANNEXURE-VI</div>
-    <div class="ct" style="font-weight:bold">UNIVERSITY GRANTS COMMISSION SELECTION &amp; AWARDS BUREAU</div>
-    <div class="ct" style="font-weight:bold">BAHADURSHAH ZAFAR MARG, NEW DELHI-110 002</div>
-    <div class="ct" style="font-weight:bold;margin:8px 0 16px">YEARLY PROGRESS REPORT FOR THE PERIOD W.E.F. ${esc(c.from)} TO ${esc(c.to)}</div>
-    <table style="border:none">
-      <tr><td style="border:none;width:58%;vertical-align:top">1. Name of Fellow</td><td style="border:none">: <b>${esc(p.name)}</b></td></tr>
-      <tr><td style="border:none;vertical-align:top">2. Number and date of award letter</td><td style="border:none">: <b>NTA Ref. No.: ${esc(p.awardNo)} Dated: ${esc(p.awardDate)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">3. Details of Research:</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. Topic of research</td><td style="border:none">: <b>${esc(p.topic)}</b></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">b. Is the Fellow working on the topic for the award of doctorate degree?</td><td style="border:none">: <b>Yes</b></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">c. If so, the date of resignation with the university</td><td style="border:none">: <b>${esc(p.endDate)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">4. Date of commencement of research:</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. At the University</td><td style="border:none">: <b>${esc(p.commenceUni)}</b></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">b. Under the UGC Fellowship</td><td style="border:none">: <b>${esc(p.commenceFel)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">5. Total number of working days during the period</td><td style="border:none;padding-top:6px">: <b>${esc(wdManual)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">6. Number of days the Fellow remained on leave (with dates):</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. With fellowship, number of days: <b>${dsp(c.cl)}</b></td><td style="border:none"></td></tr>
-    </table>
-    <p style="margin:2px 0 2px 30px"><b>Casual Leave:</b> ${esc(c.clAll.join(', '))||'NIL'}</p>
-    <table style="border:none">
-      <tr><td style="border:none;width:58%;padding-left:18px;vertical-align:top">b. Without Fellowship, number of days</td><td style="border:none">: <b>NIL</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">7. Number of days the Fellow remained out of station for fieldwork/travel with dates and places visited:</td><td style="border:none"></td></tr>
-      <tr><td style="border:none;padding-left:18px;vertical-align:top">a. Number of days</td><td style="border:none">: <b>${dsp(c.dl)}</b></td></tr>
-    </table>
-    <p style="margin:2px 0 2px 30px">${esc(c.dlAll.join(', '))||'NIL'}</p>
-    <p style="margin:2px 0 2px 18px">b. Places visited :</p>
-    <p style="margin:2px 0 2px 30px">${esc(p.places||'').replace(/\n/g,'<br>')}</p>
-    <table style="border:none">
-      <tr><td style="border:none;width:58%;padding-top:6px;vertical-align:top">8. Number of days the fellow remained present at the university/college</td><td style="border:none;padding-top:6px">: <b>${dsp(c.present)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">9. Published during the period under report</td><td style="border:none;padding-top:6px">: <b>${c.pubs.length}</b></td></tr>
-    </table>
-    <p style="margin:2px 0 2px 18px">Title of the article/paper (please enclose reprint of each):</p>
-    <div style="margin:2px 0 2px 30px">${c.pubs.map((x,i)=>(i+1)+'. '+esc(x.title)).join('<br>')||'NIL'}</div>
-    <p style="margin:8px 0 3px">10. Title of monograph written during the period under report: &nbsp; Teaching work done during the period under report:</p>
-    <p style="margin:2px 0 2px 18px">a. Number of periods taken per week at B.Sc.(Engg.)/B.Tech./B.E. level: <b>N/A</b></p>
-    <p style="margin:2px 0 2px 18px">b. Number of periods taken per week at M.E./M.Sc./Engg/M.Tech. level: <b>N/A</b></p>
-    <p style="margin:8px 0 0">11. A detailed account of the work done during the period (a separate sheet may be attached for the purpose):</p>
-    <p style="margin:2px 0 0">12. Comments of the supervisor on the progress of the research work during the period under report:</p>
-    <div style="display:flex;justify-content:space-between;margin-top:120px;font-weight:bold;font-size:11px">
-      <div>Signature of Awardee</div><div>Head of Department</div><div>Registrar/Principal/Director</div>
-    </div>`;
+    const pubList=c.pubs.length?c.pubs.map((x,i)=>(i+1)+'. '+esc(x.title)).join('<br>'):'NIL';
+    const clStr=esc(c.clAll)||'NIL';
+    const dlStr=esc(c.dlAll)||'NIL';
+    const places=esc(p.places||'').replace(/\n/g,'<br>');
+    body=
+    '<div style="text-align:right;font-weight:bold;font-size:13px;margin-bottom:10px">ANNEXURE-VI</div>'+
+    '<div class="ct" style="font-weight:bold">UNIVERSITY GRANTS COMMISSION SELECTION &amp; AWARDS BUREAU</div>'+
+    '<div class="ct" style="font-weight:bold">BAHADURSHAH ZAFAR MARG, NEW DELHI-110 002</div>'+
+    '<div class="ct" style="font-weight:bold;margin:8px 0 16px">YEARLY PROGRESS REPORT FOR THE PERIOD W.E.F. '+esc(c.from)+' TO '+esc(c.to)+'</div>'+
+    '<table style="border:none">'+
+      '<tr><td style="border:none;width:58%;vertical-align:top">1. Name of Fellow</td><td style="border:none">: <b>'+esc(p.name)+'</b></td></tr>'+
+      '<tr><td style="border:none;vertical-align:top">2. Number and date of award letter</td><td style="border:none">: <b>NTA Ref. No.: '+esc(p.awardNo)+' Dated: '+esc(p.awardDate)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">3. Details of Research:</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. Topic of research</td><td style="border:none">: <b>'+esc(p.topic)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">b. Is the Fellow working on the topic for the award of doctorate degree?</td><td style="border:none">: <b>Yes</b></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">c. If so, the date of resignation with the university</td><td style="border:none">: <b>'+esc(p.endDate)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">4. Date of commencement of research:</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. At the University</td><td style="border:none">: <b>'+esc(p.commenceUni)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">b. Under the UGC Fellowship</td><td style="border:none">: <b>'+esc(p.commenceFel)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">5. Total number of working days during the period</td><td style="border:none;padding-top:6px">: <b>'+dsp(wdManual)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">6. Number of days the Fellow remained on leave (with dates):</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. With fellowship, number of days: <b>'+dsp(c.cl)+'</b></td><td style="border:none"></td></tr>'+
+    '</table>'+
+    '<p style="margin:2px 0 2px 30px"><b>Casual Leave:</b> '+clStr+'</p>'+
+    '<table style="border:none">'+
+      '<tr><td style="border:none;width:58%;padding-left:18px;vertical-align:top">b. Without Fellowship, number of days</td><td style="border:none">: <b>NIL</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">7. Number of days the Fellow remained out of station for fieldwork/travel with dates and places visited:</td><td style="border:none"></td></tr>'+
+      '<tr><td style="border:none;padding-left:18px;vertical-align:top">a. Number of days</td><td style="border:none">: <b>'+dsp(c.dl)+'</b></td></tr>'+
+    '</table>'+
+    '<p style="margin:2px 0 2px 30px">'+dlStr+'</p>'+
+    '<p style="margin:2px 0 2px 18px">b. Places visited :</p>'+
+    '<p style="margin:2px 0 2px 30px">'+places+'</p>'+
+    '<table style="border:none">'+
+      '<tr><td style="border:none;width:58%;padding-top:6px;vertical-align:top">8. Number of days the fellow remained present at the university/college</td><td style="border:none;padding-top:6px">: <b>'+dsp(presentCalc)+'</b></td></tr>'+
+      '<tr><td style="border:none;padding-top:6px;vertical-align:top">9. Published during the period under report</td><td style="border:none;padding-top:6px">: <b>'+c.pubs.length+'</b></td></tr>'+
+    '</table>'+
+    '<p style="margin:2px 0 2px 18px">Title of the article/paper (please enclose reprint of each):</p>'+
+    '<div style="margin:2px 0 2px 30px">'+pubList+'</div>'+
+    '<p style="margin:8px 0 3px">10. Title of monograph written during the period under report: &nbsp; Teaching work done during the period under report:</p>'+
+    '<p style="margin:2px 0 2px 18px">a. Number of periods taken per week at B.Sc.(Engg.)/B.Tech./B.E. level: <b>N/A</b></p>'+
+    '<p style="margin:2px 0 2px 18px">b. Number of periods taken per week at M.E./M.Sc./Engg/M.Tech. level: <b>N/A</b></p>'+
+    '<p style="margin:8px 0 0">11. A detailed account of the work done during the period (a separate sheet may be attached for the purpose):</p>'+
+    '<p style="margin:2px 0 0">12. Comments of the supervisor on the progress of the research work during the period under report:</p>'+
+    '<div style="display:flex;justify-content:space-between;margin-top:120px;font-weight:bold;font-size:11px">'+
+      '<div>Signature of Awardee</div><div>Head of Department</div><div>Registrar/Principal/Director</div>'+
+    '</div>';
   }else{
     body=`
     <div class="ct" style="font-weight:bold;font-size:13px">A DETAILED ACCOUNT OF WORK DONE DURING THE PERIOD</div>
@@ -820,7 +824,7 @@ function printAnnual(){
     <p style="margin:4px 0">Consolidated attendance during the period ${esc(c.from)} to ${esc(c.to)}</p>
     <table>
       <tr><th class="ath">Total no of working days</th><th class="ath">Total attendance</th><th class="ath">Casual leave</th><th class="ath">Duty leave</th><th class="ath">Medical leave</th></tr>
-      <tr><td class="atd">${esc(wdManual)}</td><td class="atd">${dsp(c.present)}</td><td class="atd">${dsp(c.cl)}</td><td class="atd">${dsp(c.dl)}</td><td class="atd">${dsp(c.ot)}</td></tr>
+      <tr><td class="atd">${dsp(wdManual)}</td><td class="atd">${dsp(presentCalc)}</td><td class="atd">${dsp(c.cl)}</td><td class="atd">${dsp(c.dl)}</td><td class="atd">${dsp(c.ot)}</td></tr>
     </table>`;
   }
 
@@ -841,6 +845,7 @@ function printAnnual(){
   document.body.appendChild(a);a.click();
   setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(u)},100);
   toast('✅ Downloaded! Open file → Ctrl+P → Save as PDF')
+  }catch(e){toast('❌ Print error: '+e.message,'#e74c3c');console.error(e)}
 }
 // PRINT MONTHLY — exact jrf_form.html layout
 function doPrint(){
