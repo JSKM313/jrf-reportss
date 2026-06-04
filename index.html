@@ -762,6 +762,7 @@ async function compileReport(){
 
 function printAnnual(){
   if(!COMPILED){toast('Click "Compile Preview" first.','#e74c3c');return}
+  try{
   const p=CP,c=COMPILED,fmt=gv('r_format');
   const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const wdManual=fN(gv('r_workdays'))||fN(c.wd);
@@ -861,6 +862,7 @@ function printAnnual(){
   document.body.appendChild(a);a.click();
   setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(u)},100);
   toast('✅ Downloaded! Open file → Ctrl+P → Save as PDF')
+  }catch(e){toast('❌ Print error: '+e.message,'#e74c3c');console.error(e)}
 }
 // PRINT MONTHLY — exact jrf_form.html layout
 function doPrint(){
