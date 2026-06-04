@@ -723,8 +723,8 @@ async function compileReport(){
     if(d.ws)for(let i=0;i<d.ws.length;i++){const x=d.ws[i].d||{};workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})}
     if(d.pub)for(let i=0;i<d.pub.length;i++){const x=d.pub[i].d||{};pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})}
     cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
-    const clD=leaveDates(d,'cl');for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
-    const dlD=leaveDates(d,'dl');for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
+    const clD=leaveDatesV2(d,'cl');for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
+    const dlD=leaveDatesV2(d,'dl');for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
   }
 
   const wd=fN(gv('r_workdays'));
