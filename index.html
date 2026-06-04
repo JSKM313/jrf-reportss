@@ -302,7 +302,7 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
         </div>
         <div class="br">
           <button class="btn btn-i" onclick="compileReport()">🔄 Compile Preview</button>
-          <button class="btn btn-i" onclick="printAnnual()">🖨 Print / PDF</button>
+          <button class="btn btn-i" onclick="printAnnual()">🖨 Print / PDF (Annexure or Detailed)</button>
         </div>
         <div class="dv"></div>
         <div id="reportPreview" style="background:#fafcff;border:1px solid #dce6f0;border-radius:8px;padding:16px;font-size:13px;min-height:60px">Click "Compile Preview" to gather data from your monthly reports.</div>
@@ -763,8 +763,8 @@ async function compileReport(){
 function printAnnual(){
   if(!COMPILED){toast('Click "Compile Preview" first.','#e74c3c');return}
   try{
-  const p=CP,c=COMPILED,fmt=gv('r_format');
-  const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const p=CP||{},c=COMPILED,fmt=gv('r_format');
+  const esc=s=>String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const wdManual=fN(gv('r_workdays'))||fN(c.wd);
   const presentCalc=Math.max(0, wdManual - fN(c.cl) - fN(c.dl) - fN(c.ot));
   let body='';
