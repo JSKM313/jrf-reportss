@@ -749,7 +749,9 @@ function printAnnual(){
   if(!COMPILED){toast('Click "Compile Preview" first.','#e74c3c');return}
   const p=CP,c=COMPILED,fmt=gv('r_format');
   const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const wdManual=gv('r_workdays')||dsp(c.wd);
+  const wdManual=fN(gv('r_workdays'))||c.wd;
+  // Present = manually entered working days minus all leaves (CL + DL + Other)
+  const presentCalc=Math.max(0, wdManual - c.cl - c.dl - c.ot);
   let body='';
 
   if(fmt==='annexure'){
@@ -768,7 +770,7 @@ function printAnnual(){
       <tr><td style="border:none;padding-top:6px;vertical-align:top">4. Date of commencement of research:</td><td style="border:none"></td></tr>
       <tr><td style="border:none;padding-left:18px;vertical-align:top">a. At the University</td><td style="border:none">: <b>${esc(p.commenceUni)}</b></td></tr>
       <tr><td style="border:none;padding-left:18px;vertical-align:top">b. Under the UGC Fellowship</td><td style="border:none">: <b>${esc(p.commenceFel)}</b></td></tr>
-      <tr><td style="border:none;padding-top:6px;vertical-align:top">5. Total number of working days during the period</td><td style="border:none;padding-top:6px">: <b>${esc(wdManual)}</b></td></tr>
+      <tr><td style="border:none;padding-top:6px;vertical-align:top">5. Total number of working days during the period</td><td style="border:none;padding-top:6px">: <b>${dsp(wdManual)}</b></td></tr>
       <tr><td style="border:none;padding-top:6px;vertical-align:top">6. Number of days the Fellow remained on leave (with dates):</td><td style="border:none"></td></tr>
       <tr><td style="border:none;padding-left:18px;vertical-align:top">a. With fellowship, number of days: <b>${dsp(c.cl)}</b></td><td style="border:none"></td></tr>
     </table>
@@ -782,7 +784,7 @@ function printAnnual(){
     <p style="margin:2px 0 2px 18px">b. Places visited :</p>
     <p style="margin:2px 0 2px 30px">${esc(p.places||'').replace(/\n/g,'<br>')}</p>
     <table style="border:none">
-      <tr><td style="border:none;width:58%;padding-top:6px;vertical-align:top">8. Number of days the fellow remained present at the university/college</td><td style="border:none;padding-top:6px">: <b>${dsp(c.present)}</b></td></tr>
+      <tr><td style="border:none;width:58%;padding-top:6px;vertical-align:top">8. Number of days the fellow remained present at the university/college</td><td style="border:none;padding-top:6px">: <b>${dsp(presentCalc)}</b></td></tr>
       <tr><td style="border:none;padding-top:6px;vertical-align:top">9. Published during the period under report</td><td style="border:none;padding-top:6px">: <b>${c.pubs.length}</b></td></tr>
     </table>
     <p style="margin:2px 0 2px 18px">Title of the article/paper (please enclose reprint of each):</p>
@@ -820,7 +822,7 @@ function printAnnual(){
     <p style="margin:4px 0">Consolidated attendance during the period ${esc(c.from)} to ${esc(c.to)}</p>
     <table>
       <tr><th class="ath">Total no of working days</th><th class="ath">Total attendance</th><th class="ath">Casual leave</th><th class="ath">Duty leave</th><th class="ath">Medical leave</th></tr>
-      <tr><td class="atd">${esc(wdManual)}</td><td class="atd">${dsp(c.present)}</td><td class="atd">${dsp(c.cl)}</td><td class="atd">${dsp(c.dl)}</td><td class="atd">${dsp(c.ot)}</td></tr>
+      <tr><td class="atd">${dsp(wdManual)}</td><td class="atd">${dsp(presentCalc)}</td><td class="atd">${dsp(c.cl)}</td><td class="atd">${dsp(c.dl)}</td><td class="atd">${dsp(c.ot)}</td></tr>
     </table>`;
   }
 
