@@ -747,13 +747,6 @@ async function compileReport(){
   const wd=fN(gv('r_workdays'));
   const clStr=fmtLeaveDates(clArr), dlStr=fmtLeaveDates(dlArr);
 
-  // DEBUG: show raw structure of first in-range report
-  let dbg='';
-  if(inRange.length){
-    const s=inRange[0];
-    dbg='<div style="background:#fffbe6;border:1px solid #f0c040;border-radius:6px;padding:8px;margin-top:8px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all">DEBUG (first month):\nmon='+s.mon+' yr='+s.yr+' calM='+s.calM+' calY='+s.calY+'\nlv='+JSON.stringify(s.lv)+'</div>';
-  }
-
   COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,cl,dl,ot,clAll:clStr,dlAll:dlStr};
 
   const prev=document.getElementById('reportPreview');
@@ -763,7 +756,6 @@ async function compileReport(){
     <p>📅 <b>Working Days (entered):</b> ${dsp(wd)} &nbsp; <b>CL:</b> ${dsp(cl)} &nbsp; <b>DL/FW:</b> ${dsp(dl)} &nbsp; <b>Other:</b> ${dsp(ot)}</p>
     <p style="margin-top:6px;color:#666;font-size:12px">CL dates: ${clStr||'—'}</p>
     <p style="color:#666;font-size:12px">DL dates: ${dlStr||'—'}</p>
-    ${dbg}
     <p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>`;
   toast('✅ Compiled '+inRange.length+' month(s)')
 }
