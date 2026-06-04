@@ -699,6 +699,7 @@ function fmtLeaveDates(arr){
 }
 
 async function compileReport(){
+  try{
   const from=parseDMY(gv('r_from')),to=parseDMY(gv('r_to'));
   if(!from||!to){toast('Enter valid From and To dates.','#e74c3c');return}
   const {data:rows,error}=await SB.from('reports').select('month_key,data').eq('user_id',CU);
@@ -737,8 +738,9 @@ async function compileReport(){
     '<p>📅 <b>Working Days (entered):</b> '+dsp(wd)+' &nbsp; <b>CL:</b> '+dsp(cl)+' &nbsp; <b>DL/FW:</b> '+dsp(dl)+' &nbsp; <b>Other:</b> '+dsp(ot)+'</p>'+
     '<p style="margin-top:6px;color:#444;font-size:12px"><b>CL dates:</b> '+(clStr||'—')+'</p>'+
     '<p style="color:#444;font-size:12px"><b>DL dates:</b> '+(dlStr||'—')+'</p>'+
-    '<p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>';
+    '<p style="margin:10px 0 0;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>';
   toast('✅ Compiled '+inRange.length+' month(s)')
+  }catch(e){toast('❌ Compile error: '+e.message,'#e74c3c');console.error(e)}
 }
 
 function printAnnual(){
