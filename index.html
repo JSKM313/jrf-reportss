@@ -727,7 +727,7 @@ async function compileReport(){
   });
 
   // Aggregate
-  let workshops=[],pubs=[],present=0,cl=0,dl=0,ot=0;
+  let workshops=[],pubs=[],cl=0,dl=0,ot=0;
   let clArr=[],dlArr=[];
   inRange.forEach(d=>{
     (d.ws||[]).forEach(e=>{
@@ -739,8 +739,10 @@ async function compileReport(){
       pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})
     });
     cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
-    leaveDates(d,'cl').forEach(x=>clArr.push(x));
-    leaveDates(d,'dl').forEach(x=>dlArr.push(x))
+    const clD=leaveDates(d,'cl');
+    const dlD=leaveDates(d,'dl');
+    for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
+    for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
   });
 
   // Working days = manually entered in report form
