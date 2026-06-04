@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JRF Report System</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
+.aw{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.ab{background:white;padding:36px 40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);width:360px}
+.ab h2{text-align:center;color:#1a3a5c;margin-bottom:6px;font-size:20px}
+.ab p{text-align:center;color:#666;font-size:13px;margin-bottom:22px}
+.ab input{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;margin-bottom:12px}
+.ab button{width:100%;padding:11px;background:#1a3a5c;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:bold}
+.al{text-align:center;margin-top:14px;font-size:13px;color:#555}
+.al span{color:#1a3a5c;cursor:pointer;font-weight:bold;text-decoration:underline}
+.ae{color:#c0392b;font-size:12px;margin-bottom:10px;text-align:center}
+.app{display:none}
+.tb{background:#1a3a5c;color:white;padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+.tb h1{font-size:15px}
+.tr{display:flex;gap:10px;align-items:center;font-size:13px}
+.bs{padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold}
+.bl{background:#e74c3c;color:white}.bp{background:#2980b9;color:white}
+.mn{max-width:960px;margin:24px auto;padding:0 16px}
+.ts{display:flex;gap:6px;margin-bottom:20px}
+.tab{padding:9px 20px;border-radius:7px 7px 0 0;border:none;cursor:pointer;font-size:13px;font-weight:bold;background:#dce6f0;color:#1a3a5c}
+.tab.active{background:#1a3a5c;color:white}
+.cd{background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:28px;margin-bottom:20px}
+.cd h3{color:#1a3a5c;margin-bottom:18px;font-size:15px;border-bottom:2px solid #e0e8f0;padding-bottom:8px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg1{grid-template-columns:1fr}
+.fp{display:flex;flex-direction:column;gap:4px}
+.fp label{font-size:12px;font-weight:bold;color:#555}
+.fp input,.fp select,.fp textarea{padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:13px}
+.fp textarea{resize:vertical;min-height:60px}
+.ro{background:#f0f4f8!important;color:#1a3a5c;font-weight:bold}
+.btn{padding:9px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:bold}
+.btn-p{background:#1a3a5c;color:white}
+.btn-s{background:#27ae60;color:white}
+.btn-d{background:#e74c3c;color:white}
+.btn-i{background:#2980b9;color:white}
+.br{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:14px}
+.mc{border:1px solid #dce6f0;border-radius:8px;padding:14px;cursor:pointer;transition:all .2s}
+.mc:hover{border-color:#1a3a5c}
+.mc h4{color:#1a3a5c;font-size:14px;margin-bottom:4px}
+.mc p{font-size:12px;color:#777}
+.bx{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold;margin-top:6px}
+.bs2{background:#d5f5e3;color:#1e8449}.bd2{background:#fef9e7;color:#b7770d}
+.nm{border:2px dashed #2980b9;background:#f0f7ff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:#2980b9;font-weight:bold;font-size:13px}
+.at{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+.at th,.at td{border:1px solid #ccc;padding:6px 8px;text-align:center}
+.at th{background:#f0f4f8;font-size:12px}
+.at input{width:100%;border:none;outline:none;text-align:center;font-size:13px;background:transparent}
+.cw{border:1px solid #dce6f0;border-radius:8px;padding:14px;margin-top:12px;background:#fafcff}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ct2{font-size:13px;font-weight:bold;color:#1a3a5c}
+.cl2{display:flex;gap:6px;font-size:11px}
+.lg{padding:3px 8px;border-radius:10px;font-weight:bold}
+.lcl{background:#fde8e8;color:#c0392b}.ldl{background:#e8f4fd;color:#1a5276}.lot{background:#fef9e7;color:#7d6608}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dh{text-align:center;font-size:11px;font-weight:bold;color:#888;padding:4px 0}
+.dy{border:1px solid #e0e8f0;border-radius:6px;min-height:48px;padding:3px;cursor:pointer;text-align:center;background:white}
+.dy:hover{border-color:#1a3a5c}
+.dy.em{border:none;background:transparent;cursor:default}
+.dy.sn .dn{color:#c0392b}
+.dn{display:block;font-size:12px;font-weight:bold;line-height:1.8}
+.dt{display:block;font-size:9px;font-weight:bold;padding:1px 3px;border-radius:3px;margin-top:1px}
+.t1{background:#fde8e8;color:#c0392b}.t2{background:#f5b7b1;color:#922b21}.t3{background:#e74c3c;color:white}
+.t4{background:#d6eaf8;color:#1a5276}.t5{background:#85c1e9;color:#154360}.t6{background:#2980b9;color:white}
+.t7{background:#fef9e7;color:#7d6608}.t8{background:#fdebd0;color:#784212}.t9{background:#f39c12;color:white}
+.hi{font-size:11px;color:#999;margin-top:8px}
+.as{border:1px solid #dce6f0;border-radius:8px;padding:16px;margin-bottom:14px;background:#fafcff}
+.as h4{color:#1a3a5c;font-size:14px;margin-bottom:12px}
+.tw{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tb2{padding:6px 14px;border:2px solid #dce6f0;background:white;border-radius:20px;cursor:pointer;font-size:12px;font-weight:bold;color:#555}
+.tb2:hover,.tb2.sl{border-color:#1a3a5c;background:#1a3a5c;color:white}
+.af{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.af1{grid-template-columns:1fr}
+.ae2{display:flex;align-items:flex-start;justify-content:space-between;background:white;border:1px solid #dce6f0;border-radius:6px;padding:10px 12px;margin-bottom:8px;gap:10px}
+.ae2 p{font-size:13px;color:#333;flex:1;line-height:1.5}
+.ae2 button{background:#e74c3c;color:white;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px}
+.gt{background:#f0f7ff;border:1px solid #aed6f1;border-radius:6px;padding:10px 14px;font-size:13px;color:#1a3a5c;margin-top:8px;font-style:italic;line-height:1.6;min-height:30px}
+.ab2{padding:7px 16px;background:#27ae60;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold;margin-top:4px}
+.dv{height:1px;background:#e0e8f0;margin:16px 0}
+.pi{background:#f8f9fa;border:1px solid #e0e8f0;border-radius:6px;padding:10px 14px;font-size:13px;color:#444;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.pi span{font-weight:bold;color:#1a3a5c}
+.ib{background:#e8f4fd;border:1px solid #aed6f1;border-radius:6px;padding:10px 14px;font-size:12px;color:#1a5276;margin-bottom:10px}
+.toast{position:fixed;bottom:20px;right:20px;color:white;padding:10px 20px;border-radius:6px;font-size:13px;display:none;z-index:9999}
+</style>
+</head>
+<body>
+
+<div class="aw" id="authWrap">
+  <div class="ab" id="loginBox">
+    <h2>🎓 JRF Report System</h2>
+    <p>Pocker Sahib Memorial Orphanage College</p>
+    <div class="ae" id="loginErr"></div>
+    <input type="email" id="lu" placeholder="Email">
+    <input type="password" id="lp" placeholder="Password">
+    <button onclick="doLogin()">Login</button>
+    <div class="al">New scholar? <span onclick="showReg()">Register here</span></div>
+  </div>
+  <div class="ab" id="regBox" style="display:none">
+    <h2>Register</h2><p>Create your scholar account</p>
+    <div class="ae" id="regErr"></div>
+    <input type="email" id="ru" placeholder="Your Email">
+    <input type="password" id="rp" placeholder="Choose Password (min 6 chars)">
+    <input type="password" id="rp2" placeholder="Confirm Password">
+    <button onclick="doRegister()">Create Account</button>
+    <div class="al">Already registered? <span onclick="showLogin()">Login</span></div>
+  </div>
+</div>
+
+<div class="app" id="appWrap">
+  <div class="tb">
+    <h1>🎓 JRF Monthly Progress Report — PSMOC</h1>
+    <div class="tr">
+      <span id="topName"></span>
+      <button class="bs bp" onclick="showTab('profile')">My Profile</button>
+      <button class="bs bl" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="mn">
+    <div class="ts">
+      <button class="tab active" id="tab-dashboard" onclick="showTab('dashboard')">📋 Dashboard</button>
+      <button class="tab" id="tab-profile" onclick="showTab('profile')">👤 Profile</button>
+      <button class="tab" id="tab-monthly" onclick="showTab('monthly')">📝 Monthly Form</button>
+    </div>
+
+    <div id="pane-dashboard">
+      <div class="cd"><h3>My Monthly Reports</h3><div class="mg" id="monthGrid"></div></div>
+    </div>
+
+    <div id="pane-profile" style="display:none">
+      <div class="cd">
+        <h3>👤 Scholar Profile <span style="font-size:12px;color:#888;font-weight:normal">(Filled once)</span></h3>
+        <div class="fg">
+          <div class="fp"><label>Full Name</label><input id="p_name" placeholder="JAFAR SADIQUE K"></div>
+          <div class="fp"><label>Student ID</label><input id="p_id" placeholder="220510009756"></div>
+          <div class="fp"><label>Supervising Teacher</label><input id="p_supervisor" placeholder="Dr. ABBAS VATTOLI"></div>
+          <div class="fp"><label>Department</label><input id="p_dept" placeholder="Department of Commerce"></div>
+          <div class="fp"><label>Registration Date</label><input id="p_regdate" placeholder="25-MAY-2024"></div>
+          <div class="fp"><label>Fellowship Scheme</label><input id="p_scheme" placeholder="UGC-NET/JRF"></div>
+          <div class="fp"><label>Fellowship From</label><input id="p_fellowFrom" placeholder="25-MAY-2024"></div>
+          <div class="fp"><label>Fellowship To</label><input id="p_fellowTo" placeholder="24-MAY-2029"></div>
+          <div class="fp"><label>Monthly Fellowship (Rs.)</label><input id="p_fellowship" placeholder="37000"></div>
+          <div class="fp"><label>HRA @ 20% (Rs.)</label><input id="p_hra" placeholder="7400"></div>
+          <div class="fp"><label>Contingency (Rs.)</label><input id="p_contingency" placeholder="2500"></div>
+          <div class="fp"><label>Escort/Reader (Rs.)</label><input id="p_escort" placeholder="NIL"></div>
+        </div>
+        <div class="dv"></div>
+        <h3 style="font-size:14px;margin-bottom:10px">Leave Balance</h3>
+        <div class="ib"><b>CL & DL yearly:</b> Reset every January. &nbsp;<b>DL lifetime:</b> Never resets.</div>
+        <div class="fg">
+          <div class="fp"><label>CL availed this year (before this month)</label><input id="p_clUsed" type="number" placeholder="0" min="0" step="0.5"></div>
+          <div class="fp"><label>DL/OD/FW availed this year (before this month)</label><input id="p_dlUsed" type="number" placeholder="0" min="0" step="0.5"></div>
+          <div class="fp"><label>Total DL/OD/FW lifetime</label><input id="p_dlLifetime" type="number" placeholder="0" min="0" step="0.5"></div>
+        </div>
+        <div class="br"><button class="btn btn-p" onclick="saveProfile()">💾 Save Profile</button></div>
+      </div>
+    </div>
+
+    <div id="pane-monthly" style="display:none">
+      <div class="cd">
+        <h3>📝 Monthly Report — <span id="fml">New Entry</span></h3>
+        <div class="pi" id="profPrev"></div>
+        <div class="dv"></div>
+        <div class="ib">Enter <b>claiming month and year</b> — dates fill automatically.</div>
+        <div class="fg">
+          <div class="fp"><label>Claiming Month</label>
+            <select id="m_month">
+              <option value="">Select Month</option>
+              <option>January</option><option>February</option><option>March</option><option>April</option>
+              <option>May</option><option>June</option><option>July</option><option>August</option>
+              <option>September</option><option>October</option><option>November</option><option>December</option>
+            </select>
+          </div>
+          <div class="fp"><label>Claiming Year</label><input id="m_year" type="number" placeholder="2025"></div>
+        </div>
+        <div class="br" style="margin-top:10px;margin-bottom:0">
+          <button class="btn btn-i" onclick="autoFill()">⚡ Auto-fill Dates</button>
+        </div>
+        <div class="dv"></div>
+        <div class="fg">
+          <div class="fp"><label>Claiming Period From</label><input id="m_from" class="ro" readonly></div>
+          <div class="fp"><label>Claiming Period To</label><input id="m_to" class="ro" readonly></div>
+        </div>
+        <div class="dv"></div>
+        <h3 style="font-size:14px;margin-bottom:6px">Attendance</h3>
+        <div class="ib" style="margin-bottom:10px">Attendance month = <b>previous month</b>. Mark leave on calendar — totals update automatically.</div>
+        <table class="at">
+          <tr><th>Month</th><th>Working Days</th><th>Present</th><th>CL</th><th>DL/OD/FW</th><th>Other Leave</th></tr>
+          <tr>
+            <td><input id="a_month" class="ro" readonly></td>
+            <td><input id="a_wd" type="number" min="0" step="0.5" oninput="calcAtt()" placeholder="26"></td>
+            <td><input id="a_present" class="ro" readonly></td>
+            <td><input id="a_cl" class="ro" readonly></td>
+            <td><input id="a_dl" class="ro" readonly></td>
+            <td><input id="a_ot" class="ro" readonly></td>
+          </tr>
+        </table>
+        <div class="fg" style="margin-top:12px">
+          <div class="fp"><label>Total CL in year (up to this month)</label><input id="a_tcl" class="ro" readonly></div>
+          <div class="fp"><label>CL at Credit (Balance)</label><input id="a_clbal" class="ro" readonly></div>
+          <div class="fp"><label>Total DL/OD/FW in year (up to this month)</label><input id="a_tdly" class="ro" readonly></div>
+          <div class="fp"><label>DL/OD/FW availed till date (lifetime)</label><input id="a_tdll" class="ro" readonly></div>
+          <div class="fp" style="grid-column:span 2"><label>*Remarks</label><input id="a_rem"></div>
+        </div>
+        <div class="cw">
+          <div class="ch">
+            <span class="ct2">Leave Calendar — <span id="calLbl">click Auto-fill first</span></span>
+            <div class="cl2"><span class="lg lcl">CL</span><span class="lg ldl">DL</span><span class="lg lot">Other</span></div>
+          </div>
+          <div class="cg" id="calGrid"></div>
+          <div class="hi">Click a day to cycle: None → CL FN → CL AN → CL Full → DL FN → DL AN → DL Full → Other FN → Other AN → Other Full → None</div>
+        </div>
+        <div class="dv"></div>
+        <div class="as">
+          <h4>📄 Publications / Books / Chapters</h4>
+          <div class="tw" id="pub-tr">
+            <button class="tb2" onclick="selT('pub','Research Paper')">Research Paper</button>
+            <button class="tb2" onclick="selT('pub','Book')">Book</button>
+            <button class="tb2" onclick="selT('pub','Book Chapter')">Book Chapter</button>
+            <button class="tb2" onclick="selT('pub','Journal Article')">Journal Article</button>
+          </div>
+          <div id="pub-f" style="display:none"><div id="pub-fg" class="af"></div><button class="ab2" onclick="addA('pub')">+ Add</button></div>
+          <div id="pub-list"></div><div class="gt" id="pub-out">—</div>
+        </div>
+        <div class="as">
+          <h4>🎓 Workshop / Seminar / Invited Talk</h4>
+          <div class="tw" id="ws-tr">
+            <button class="tb2" onclick="selT('ws','Workshop')">Workshop</button>
+            <button class="tb2" onclick="selT('ws','Seminar')">Seminar</button>
+            <button class="tb2" onclick="selT('ws','Conference')">Conference</button>
+            <button class="tb2" onclick="selT('ws','Invited Talk')">Invited Talk</button>
+            <button class="tb2" onclick="selT('ws','FDP')">FDP</button>
+          </div>
+          <div id="ws-f" style="display:none"><div id="ws-fg" class="af"></div><button class="ab2" onclick="addA('ws')">+ Add</button></div>
+          <div id="ws-list"></div><div class="gt" id="ws-out">—</div>
+        </div>
+        <div class="as">
+          <h4>📚 Academic Work / Tutorials / Lab / Library</h4>
+          <div class="tw" id="ac-tr">
+            <button class="tb2" onclick="selT('ac','Tutorial')">Tutorial</button>
+            <button class="tb2" onclick="selT('ac','Laboratory')">Laboratory</button>
+            <button class="tb2" onclick="selT('ac','Library Work')">Library Work</button>
+            <button class="tb2" onclick="selT('ac','Academic Assistance')">Academic Assistance</button>
+          </div>
+          <div id="ac-f" style="display:none"><div id="ac-fg" class="af"></div><button class="ab2" onclick="addA('ac')">+ Add</button></div>
+          <div id="ac-list"></div><div class="gt" id="ac-out">—</div>
+        </div>
+        <div class="dv"></div>
+        <div class="fg fg1">
+          <div class="fp"><label>Brief Description of Research Work</label><textarea id="m_research" rows="4"></textarea></div>
+          <div class="fp"><label>Supervisor Comments</label><textarea id="m_sup" rows="3"></textarea></div>
+        </div>
+        <div class="br">
+          <button class="btn btn-s" id="btnSaveDraft" onclick="saveM('draft')">💾 Save Draft</button>
+          <button class="btn btn-p" id="btnSubmit" onclick="saveM('submitted')">✅ Submit</button>
+          <button class="btn btn-i" id="btnPrint" onclick="doPrint()">🖨 Print / PDF</button>
+          <button class="btn btn-d" id="btnDel" style="display:none" onclick="delM()">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const CYC=[null,'cl-fn','cl-an','cl-full','dl-fn','dl-an','dl-full','ot-fn','ot-an','ot-full'];
+const TL={'cl-fn':'CL FN','cl-an':'CL AN','cl-full':'CL Full','dl-fn':'DL FN','dl-an':'DL AN','dl-full':'DL Full','ot-fn':'Ot FN','ot-an':'Ot AN','ot-full':'Ot Full'};
+const TC={'cl-fn':'t1','cl-an':'t2','cl-full':'t3','dl-fn':'t4','dl-an':'t5','dl-full':'t6','ot-fn':'t7','ot-an':'t8','ot-full':'t9'};
+const TCL=30;
+// ===== SUPABASE SETUP =====
+const SB = supabase.createClient(
+  'https://sxnsbpbaivuyjqbsjpuj.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4bnNicGJhaXZ1eWpxYnNqcHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MTI5NjUsImV4cCI6MjA5NjA4ODk2NX0.MIuYs3VU7__k7An0iiIH2Td6Yg4aRX3spLplj0zDUj4'
+);
+
+let CU=null,EM=null,CP={},CUEMAIL='';
+let lv={},calM=null,calY=null;
+const A={pub:{t:null,e:[]},ws:{t:null,e:[]},ac:{t:null,e:[]}};
+
+function fN(v){const n=parseFloat(String(v||0));return isNaN(n)?0:Math.round(n*2)/2}
+function dsp(n){n=fN(n);return n%1===0?String(n):n.toFixed(1)}
+function gv(id){const e=document.getElementById(id);return e?e.value:''}
+function sv(id,v){const e=document.getElementById(id);if(e)e.value=v}
+
+function toast(msg,c){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=c||'#27ae60';t.style.display='block';
+  setTimeout(()=>{t.style.display='none'},2500)
+}
+
+// AUTH
+function showReg(){document.getElementById('loginBox').style.display='none';document.getElementById('regBox').style.display='block'}
+function showLogin(){document.getElementById('regBox').style.display='none';document.getElementById('loginBox').style.display='block'}
+
+async function doRegister(){
+  const email=document.getElementById('ru').value.trim(),pass=document.getElementById('rp').value,pass2=document.getElementById('rp2').value;
+  const err=document.getElementById('regErr');
+  if(!email||!pass){err.textContent='Fill all fields.';return}
+  if(pass!==pass2){err.textContent='Passwords do not match.';return}
+  err.textContent='Creating account...';
+  const {error}=await SB.auth.signUp({email,password:pass});
+  if(error){err.textContent=error.message;return}
+  toast('Account created! Please login.');showLogin();
+  err.textContent=''
+}
+
+async function doLogin(){
+  const email=document.getElementById('lu').value.trim(),pass=document.getElementById('lp').value;
+  const err=document.getElementById('loginErr');
+  if(!email||!pass){err.textContent='Fill all fields.';return}
+  err.textContent='Logging in...';
+  const {data,error}=await SB.auth.signInWithPassword({email,password:pass});
+  if(error){err.textContent=error.message;return}
+  err.textContent='';
+  CU=data.user.id;CUEMAIL=email;
+  const {data:prof}=await SB.from('profiles').select('data').eq('id',CU).maybeSingle();
+  CP=(prof&&prof.data)?prof.data:{};
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('appWrap').style.display='block';
+  document.getElementById('topName').textContent='👤 '+email;
+  showTab('dashboard');loadDash()
+}
+
+async function doLogout(){
+  await SB.auth.signOut();
+  CU=null;CP={};CUEMAIL='';
+  document.getElementById('authWrap').style.display='flex';
+  document.getElementById('appWrap').style.display='none';
+  sv('lu','');sv('lp','')
+}
+
+// TABS
+function showTab(t){
+  ['dashboard','profile','monthly'].forEach(id=>{
+    document.getElementById('pane-'+id).style.display=id===t?'block':'none';
+    document.getElementById('tab-'+id).classList.toggle('active',id===t)
+  });
+  if(t==='profile')loadProf();
+  if(t==='dashboard')loadDash()
+}
+
+// PROFILE
+const PK=['name','id','supervisor','dept','regdate','scheme','fellowFrom','fellowTo','fellowship','hra','contingency','escort','clUsed','dlUsed','dlLifetime'];
+function loadProf(){PK.forEach(k=>{const e=document.getElementById('p_'+k);if(e&&CP[k]!==undefined)e.value=CP[k]})}
+async function saveProfile(){
+  const d={};PK.forEach(k=>{d[k]=gv('p_'+k)});
+  const {error}=await SB.from('profiles').upsert({id:CU,data:d,updated_at:new Date().toISOString()});
+  if(error){toast('❌ '+error.message,'#e74c3c');return}
+  CP=d;toast('✅ Profile saved!')
+}
+
+// AUTO FILL
+function autoFill(){
+  const m=gv('m_month'),y=parseInt(gv('m_year'));
+  if(!m||!y){toast('Select month and year first.','#e74c3c');return}
+  const mi=MN.indexOf(m),days=new Date(y,mi+1,0).getDate();
+  sv('m_from','01-'+MS[mi]+'-'+y);
+  sv('m_to',days+'-'+MS[mi]+'-'+y);
+  let pm=mi-1,py=y;if(pm<0){pm=11;py=y-1}
+  sv('a_month',MN[pm]+' '+py);
+  document.getElementById('fml').textContent=m+' '+y;
+  lv={};calM=pm;calY=py;
+  buildCal();calcAtt();
+  toast('✅ Dates auto-filled!')
+}
+
+// CALENDAR
+function buildCal(){
+  if(calM===null)return;
+  const g=document.getElementById('calGrid');
+  document.getElementById('calLbl').textContent=MN[calM]+' '+calY;
+  g.innerHTML='';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{
+    const h=document.createElement('div');h.className='dh';h.textContent=d;g.appendChild(h)
+  });
+  const first=new Date(calY,calM,1).getDay(),total=new Date(calY,calM+1,0).getDate();
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='dy em';g.appendChild(e)}
+  for(let d=1;d<=total;d++){
+    const sun=new Date(calY,calM,d).getDay()===0;
+    const c=document.createElement('div');c.className='dy'+(sun?' sn':'');
+    const tag=lv[d]||null;
+    c.innerHTML='<span class="dn">'+d+'</span>'+(tag?'<span class="dt '+TC[tag]+'">'+TL[tag]+'</span>':'');
+    c.onclick=(function(dd){return function(){cycleDay(dd)}})(d);
+    g.appendChild(c)
+  }
+}
+
+function cycleDay(d){
+  const cur=lv[d]||null,idx=CYC.indexOf(cur),next=CYC[(idx+1)%CYC.length];
+  if(next===null)delete lv[d];else lv[d]=next;
+  buildCal();recalcLv()
+}
+
+function recalcLv(){
+  let cl=0,dl=0,ot=0;
+  Object.values(lv).forEach(v=>{
+    if(!v)return;
+    const val=v.endsWith('-full')?1:0.5;
+    if(v.startsWith('cl'))cl+=val;
+    else if(v.startsWith('dl'))dl+=val;
+    else ot+=val
+  });
+  sv('a_cl',dsp(cl));sv('a_dl',dsp(dl));sv('a_ot',dsp(ot));calcAtt()
+}
+
+// ATTENDANCE
+function calcAtt(){
+  const wd=fN(gv('a_wd')),cl=fN(gv('a_cl')),dl=fN(gv('a_dl')),ot=fN(gv('a_ot'));
+  sv('a_present',dsp(Math.max(0,wd-cl-dl-ot)));
+  const isJan=gv('m_month')==='January';
+  const cb=fN(CP.clUsed),db=fN(CP.dlUsed),dlf=fN(CP.dlLifetime);
+  const tcl=isJan?cl:cb+cl,tdly=isJan?dl:db+dl,tdll=dlf+dl;
+  sv('a_tcl',dsp(tcl));sv('a_clbal',dsp(Math.max(0,TCL-tcl)));
+  sv('a_tdly',dsp(tdly));sv('a_tdll',dsp(tdll))
+}
+
+// DASHBOARD
+async function loadDash(){
+  const g=document.getElementById('monthGrid');g.innerHTML='';
+  const nc=document.createElement('div');nc.className='mc nm';
+  nc.innerHTML='<div style="font-size:28px">+</div><div>New Monthly Report</div>';
+  nc.onclick=()=>openM(null);g.appendChild(nc);
+  const {data:rows,error}=await SB.from('reports').select('month_key,data').eq('user_id',CU);
+  if(error){toast('❌ '+error.message,'#e74c3c');return}
+  const list=(rows||[]).map(row=>({k:row.month_key,d:row.data||{}}));
+  list.sort((a,b)=>b.k.localeCompare(a.k));
+  list.forEach(({k,d})=>{
+    const c=document.createElement('div');c.className='mc';
+    c.innerHTML='<h4>📅 '+(d.mon||k)+' '+(d.yr||'')+'</h4><p>'+(d.a_month||'')+'</p><span class="bx '+(d.status==='submitted'?'bs2':'bd2')+'">'+(d.status==='submitted'?'✅ Submitted':'📝 Draft')+'</span>';
+    c.onclick=()=>openM(k);g.appendChild(c)
+  })
+}
+
+// OPEN MONTHLY
+async function openM(mk){
+  EM=mk;showTab('monthly');
+  document.getElementById('profPrev').innerHTML=
+    '<div><b>Name:</b> <span>'+(CP.name||'—')+'</span></div>'+
+    '<div><b>ID:</b> <span>'+(CP.id||'—')+'</span></div>'+
+    '<div><b>Supervisor:</b> <span>'+(CP.supervisor||'—')+'</span></div>'+
+    '<div><b>Scheme:</b> <span>'+(CP.scheme||'—')+'</span></div>';
+  const flds=['m_month','m_year','m_from','m_to','a_month','a_wd','a_present','a_cl','a_dl','a_ot','a_tcl','a_clbal','a_tdly','a_tdll','a_rem','m_research','m_sup'];
+  flds.forEach(id=>sv(id,''));
+  ['pub','ws','ac'].forEach(s=>{A[s].e=[];A[s].t=null;renderA(s);document.getElementById(s+'-f').style.display='none';document.querySelectorAll('#'+s+'-tr .tb2').forEach(b=>b.classList.remove('sl'))});
+  lv={};calM=null;calY=null;
+  document.getElementById('calLbl').textContent='click Auto-fill first';
+  document.getElementById('calGrid').innerHTML='';
+  document.getElementById('fml').textContent='New Entry';
+  document.getElementById('btnDel').style.display='none';
+  if(mk){
+    const {data:row}=await SB.from('reports').select('data').eq('user_id',CU).eq('month_key',mk).maybeSingle();
+    const d=(row&&row.data)?row.data:null;
+    if(d){
+      flds.forEach(id=>{if(d[id]!==undefined)sv(id,d[id])});
+      if(d.lv)lv=d.lv;
+      if(d.calM!==undefined&&d.calM!==null){calM=d.calM;calY=d.calY;buildCal()}
+      if(d.pub)loadA('pub',d.pub);
+      if(d.ws)loadA('ws',d.ws);
+      if(d.ac)loadA('ac',d.ac);
+      document.getElementById('fml').textContent=(d.mon||'')+' '+(d.yr||'');
+    }
+    document.getElementById('btnDel').style.display='inline-block'
+  }
+}
+
+// SAVE MONTHLY
+async function saveM(status){
+  const mon=gv('m_month'),yr=gv('m_year');
+  if(!mon||!yr){toast('Select month and year first.','#e74c3c');return}
+  const mk=yr+'_'+String(MN.indexOf(mon)+1).padStart(2,'0');
+  const d={status,mon,yr,lv,calM,calY,pub:A.pub.e,ws:A.ws.e,ac:A.ac.e};
+  ['m_month','m_year','m_from','m_to','a_month','a_wd','a_present','a_cl','a_dl','a_ot','a_tcl','a_clbal','a_tdly','a_tdll','a_rem','m_research','m_sup']
+    .forEach(id=>d[id]=gv(id));
+  const {error}=await SB.from('reports').upsert(
+    {user_id:CU,month_key:mk,data:d,updated_at:new Date().toISOString()},
+    {onConflict:'user_id,month_key'}
+  );
+  if(error){toast('❌ '+error.message,'#e74c3c');return}
+  EM=mk;
+  document.getElementById('btnDel').style.display='inline-block';
+  if(status==='submitted'){
+    const isJan=mon==='January',cl=fN(gv('a_cl')),dl=fN(gv('a_dl'));
+    CP.clUsed=isJan?cl:fN(CP.clUsed)+cl;
+    CP.dlUsed=isJan?dl:fN(CP.dlUsed)+dl;
+    CP.dlLifetime=fN(CP.dlLifetime)+dl;
+    await SB.from('profiles').upsert({id:CU,data:CP,updated_at:new Date().toISOString()})
+  }
+  toast(status==='submitted'?'✅ Submitted!':'💾 Draft saved!')
+}
+
+async function delM(){
+  if(!EM||!confirm('Delete this report?'))return;
+  await SB.from('reports').delete().eq('user_id',CU).eq('month_key',EM);
+  toast('🗑 Deleted.','#e74c3c');EM=null;showTab('dashboard');loadDash()
+}
+
+// ACTIVITIES
+const FM={
+  'Research Paper':[{i:'title',l:'Title',p:'Paper title'},{i:'journal',l:'Journal/Conference',p:'Journal name'},{i:'vol',l:'Volume/Issue',p:'Vol.1 Issue 2'},{i:'year',l:'Year',p:'2025'},{i:'issn',l:'ISSN',p:'XXXX-XXXX'}],
+  'Book':[{i:'title',l:'Title',p:'Book title'},{i:'publisher',l:'Publisher',p:'Publisher'},{i:'year',l:'Year',p:'2025'},{i:'isbn',l:'ISBN',p:'ISBN'}],
+  'Book Chapter':[{i:'chapter',l:'Chapter Title',p:'Chapter'},{i:'book',l:'Book Title',p:'Book'},{i:'editor',l:'Editor(s)',p:'Editors'},{i:'publisher',l:'Publisher',p:'Publisher'},{i:'year',l:'Year',p:'2025'}],
+  'Journal Article':[{i:'title',l:'Title',p:'Article title'},{i:'journal',l:'Journal',p:'Journal name'},{i:'vol',l:'Vol/Pages',p:'Vol.1 pp.1-10'},{i:'year',l:'Year',p:'2025'}],
+  'Workshop':[{i:'topic',l:'Topic',p:'e.g. SLR'},{i:'org',l:'Organised by',p:'Institution'},{i:'place',l:'Place',p:'City'},{i:'date',l:'Date(s)',p:'10-11 Jun 2025'},{i:'role',l:'Role',p:'Participant'}],
+  'Seminar':[{i:'topic',l:'Topic',p:'Seminar topic'},{i:'org',l:'Organised by',p:'Institution'},{i:'place',l:'Place',p:'City'},{i:'date',l:'Date',p:'10 Jun 2025'},{i:'role',l:'Role',p:'Participant'}],
+  'Conference':[{i:'title',l:'Conference',p:'Full name'},{i:'org',l:'Organised by',p:'Institution'},{i:'place',l:'Place',p:'City'},{i:'date',l:'Date(s)',p:'10-12 Jun 2025'},{i:'paper',l:'Paper (if any)',p:'Title or NIL'}],
+  'Invited Talk':[{i:'topic',l:'Topic',p:'Talk topic'},{i:'event',l:'Event',p:'Event name'},{i:'org',l:'Organised by',p:'Institution'},{i:'place',l:'Place',p:'City'},{i:'date',l:'Date',p:'10 Jun 2025'}],
+  'FDP':[{i:'topic',l:'Topic',p:'FDP theme'},{i:'org',l:'Organised by',p:'Institution'},{i:'place',l:'Place',p:'City'},{i:'date',l:'Date(s)',p:'10-14 Jun 2025'},{i:'mode',l:'Mode',p:'Online/Offline'}],
+  'Tutorial':[{i:'subject',l:'Subject',p:'Research Methodology'},{i:'class',l:'Class',p:'M.Com III Sem'},{i:'hours',l:'Hours',p:'4 hours'}],
+  'Laboratory':[{i:'subject',l:'Subject',p:'Computer Applications'},{i:'class',l:'Class',p:'B.Com II Sem'},{i:'hours',l:'Hours',p:'6 hours'}],
+  'Library Work':[{i:'activity',l:'Activity',p:'Cataloguing'},{i:'hours',l:'Hours',p:'8 hours'}],
+  'Academic Assistance':[{i:'activity',l:'Nature',p:'Curriculum revision'},{i:'dept',l:'Dept',p:'Department'},{i:'hours',l:'Hours',p:'5 hours'}]
+};
+
+function gs(t,d){
+  switch(t){
+    case 'Research Paper':return'Published a research paper titled "'+d.title+'" in '+d.journal+', '+d.vol+' ('+d.year+')'+(d.issn?', ISSN:'+d.issn:'')+'.';
+    case 'Book':return'Published a book titled "'+d.title+'" by '+d.publisher+' ('+d.year+')'+(d.isbn?', ISBN:'+d.isbn:'')+'.';
+    case 'Book Chapter':return'Contributed a chapter "'+d.chapter+'" in "'+d.book+'" edited by '+d.editor+', '+d.publisher+' ('+d.year+').';
+    case 'Journal Article':return'Published "'+d.title+'" in '+d.journal+', '+d.vol+' ('+d.year+').';
+    case 'Workshop':return'Attended a workshop on "'+d.topic+'" organised by '+d.org+', '+d.place+' on '+d.date+' as '+d.role+'.';
+    case 'Seminar':return(d.role==='Presenter'?'Presented':'Attended a seminar')+' on "'+d.topic+'" organised by '+d.org+', '+d.place+' on '+d.date+'.';
+    case 'Conference':return(d.paper&&d.paper!=='NIL'?'Presented "'+d.paper+'" at':'Participated in')+' conference "'+d.title+'", '+d.org+', '+d.place+' during '+d.date+'.';
+    case 'Invited Talk':return'Delivered an invited talk on "'+d.topic+'" at '+d.event+', '+d.org+', '+d.place+' on '+d.date+'.';
+    case 'FDP':return'Attended FDP on "'+d.topic+'", '+d.org+', '+d.place+' during '+d.date+' ('+d.mode+').';
+    case 'Tutorial':return'Conducted tutorial classes on '+d.subject+' for '+d.class+' ('+d.hours+').';
+    case 'Laboratory':return'Assisted in lab sessions for '+d.subject+', '+d.class+' ('+d.hours+').';
+    case 'Library Work':return'Assisted in library: '+d.activity+' ('+d.hours+').';
+    case 'Academic Assistance':return'Provided academic assistance: '+d.activity+' in '+d.dept+' ('+d.hours+').';
+    default:return''
+  }
+}
+
+function selT(sec,type){
+  A[sec].t=type;
+  document.querySelectorAll('#'+sec+'-tr .tb2').forEach(b=>b.classList.toggle('sl',b.textContent===type));
+  const flds=FM[type]||[];
+  const fg=document.getElementById(sec+'-fg');
+  fg.className=flds.length<=3?'af af1':'af';
+  fg.innerHTML=flds.map(f=>'<div class="fp"><label>'+f.l+'</label><input type="text" id="'+sec+'_'+f.i+'" placeholder="'+f.p+'"></div>').join('');
+  document.getElementById(sec+'-f').style.display='block'
+}
+
+function addA(sec){
+  const t=A[sec].t;if(!t){toast('Select a type first.','#e74c3c');return}
+  const flds=FM[t]||[],d={};
+  flds.forEach(f=>{const e=document.getElementById(sec+'_'+f.i);d[f.i]=e?e.value.trim():''});
+  if(!d[flds[0]?.i]){toast('Fill at least the first field.','#e74c3c');return}
+  A[sec].e.push({t,d});
+  flds.forEach(f=>{const e=document.getElementById(sec+'_'+f.i);if(e)e.value=''});
+  renderA(sec);toast('✅ Added!')
+}
+
+function remA(sec,i){A[sec].e.splice(i,1);renderA(sec)}
+
+function renderA(sec){
+  const list=document.getElementById(sec+'-list'),out=document.getElementById(sec+'-out');
+  list.innerHTML='';
+  if(!A[sec].e.length){out.textContent='—';return}
+  A[sec].e.forEach((e,i)=>{
+    const s=gs(e.t,e.d),div=document.createElement('div');div.className='ae2';
+    div.innerHTML='<p>'+(i+1)+'. '+s+'</p><button onclick="remA(\''+sec+'\','+i+')">✕</button>';
+    list.appendChild(div)
+  });
+  out.textContent=A[sec].e.map((e,i)=>(i+1)+'. '+gs(e.t,e.d)).join(' ')
+}
+
+function loadA(sec,entries){A[sec].e=entries||[];renderA(sec)}
+function getAT(sec){return A[sec].e.map((e,i)=>(i+1)+'. '+gs(e.t,e.d)).join(' ')}
+
+// PRINT — exact jrf_form.html layout
+function doPrint(){
+  const p=CP,r=id=>gv(id);
+  const esc=s=>String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const html=`<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>Monthly Progress Report - ${esc(r('m_month'))} ${esc(r('m_year'))}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', serif; font-size: 13px; background: #f0f0f0; padding: 20px; }
+  .page { background: white; max-width: 850px; margin: 0 auto; padding: 30px 36px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+  .college-header { text-align: center; margin-bottom: 10px; }
+  .college-header .college-name { font-size: 16px; font-weight: bold; text-transform: uppercase; }
+  .college-header .college-place { font-size: 14px; font-weight: bold; }
+  .report-title { text-align: center; font-size: 14px; font-weight: bold; margin: 8px 0 4px; text-decoration: underline; }
+  .report-sub { text-align: center; font-size: 12px; font-style: italic; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  td, th { border: 1px solid #000; padding: 4px 7px; vertical-align: middle; }
+  .label-col { width: 42%; font-weight: normal; }
+  .value-col { font-weight: bold; }
+  .section-header td { background: #fff; font-weight: bold; text-align: center; font-size: 13px; padding: 5px; }
+  .amount-table td { width: 50%; }
+  .amount-label { font-weight: bold; }
+  .att-th { background: #f9f9f9; font-weight: bold; text-align: center; font-size: 12px; }
+  .att-td { text-align: center; }
+  .summary-row td { font-size: 12px; }
+  .sig-row { display: flex; justify-content: space-evenly; margin-top: 18px; text-align: center; font-size: 12px; font-weight: bold; align-items: flex-start; }
+  .sig-block { flex: 1; }
+  .office-header { font-weight: bold; margin: 12px 0 4px; font-size: 13px; }
+  .cell-val { height: 170px; padding: 4px 6px; vertical-align: top; }
+  @media print { .cell-val { height: 170px !important; } }
+  @media print { body { background: white; padding: 0; } .page { box-shadow: none; padding: 15px; } }
+</style></head><body>
+<div class="page">
+  <div class="college-header">
+    <div class="college-name">Pocker Sahib Memorial Orphanage College (Autonomous)</div>
+    <div class="college-place">Tirurangadi</div>
+  </div>
+  <div class="report-title">Monthly Progress Report of PhD Scholar</div>
+  <div class="report-sub">(To be enclosed along with Scholarship Claim Bill / Annexure)</div>
+
+  <table>
+    <tr><td class="label-col">Name of the Scholar</td><td class="value-col">${esc(p.name)}</td></tr>
+    <tr><td class="label-col">Student ID</td><td class="value-col">${esc(p.id)}</td></tr>
+    <tr><td class="label-col">Supervising Teacher</td><td class="value-col">${esc(p.supervisor)}</td></tr>
+    <tr><td class="label-col">Department</td><td class="value-col">${esc(p.dept)}</td></tr>
+    <tr><td class="label-col">Registration Date</td><td class="value-col">${esc(p.regdate)}</td></tr>
+    <tr><td class="label-col">Fellowship Scheme</td><td class="value-col">${esc(p.scheme)}</td></tr>
+    <tr><td class="label-col">Total period of fellowship as per the scheme</td><td class="value-col">From: ${esc(p.fellowFrom)} &nbsp;To: ${esc(p.fellowTo)}</td></tr>
+    <tr><td class="label-col">Month / Period for which Fellowship Claiming</td><td class="value-col">From: ${esc(r('m_from'))} &nbsp;To: ${esc(r('m_to'))}</td></tr>
+    <tr><td class="label-col">Yearly progress (Annexure VI) as per the scheme</td><td class="value-col">Due / Not Due &nbsp;(Submit Annexure VI if Due)</td></tr>
+    <tr><td class="label-col">Six-month progress as per university regulation</td><td class="value-col">Due / Not Due &nbsp;(Submit progress evaluation report if Due)</td></tr>
+    <tr><td class="label-col">Details of Dues payable by the Scholar, if any (Semester fee, internet fee etc.)</td><td class="value-col">NIL</td></tr>
+  </table>
+
+  <br><br>
+  <table class="amount-table">
+    <tr><td colspan="2" class="section-header">Amount claiming during the period (Scheme Components)</td></tr>
+    <tr>
+      <td><span class="amount-label">Monthly Fellowship: Rs.</span> ${esc(p.fellowship)}</td>
+      <td><span class="amount-label">Monthly HRA @ 20% : Rs.</span> ${esc(p.hra)}</td>
+    </tr>
+    <tr>
+      <td><span class="amount-label">Contingency Rs.</span> ${esc(p.contingency)}</td>
+      <td><span class="amount-label">Escort/Reader Assistance Rs.</span> ${esc(p.escort)||'NIL'}</td>
+    </tr>
+  </table>
+
+  <br>
+  <table>
+    <tr>
+      <td colspan="6" style="font-weight:bold;padding:5px 7px;">
+        Attendance during the period based on attendance record<br>
+        <span style="font-weight:normal;font-size:12px;font-style:italic">(Prior approval of the Head of the Institution is mandatory for all kinds of leave)</span>
+      </td>
+    </tr>
+    <tr>
+      <th class="att-th" style="text-align:left;font-weight:normal;width:14%;">Month</th>
+      <th class="att-th" style="width:17%;">No. of Working Days</th>
+      <th class="att-th" style="width:15%;">No. of Present</th>
+      <th class="att-th" style="width:12%;">No. of CL</th>
+      <th class="att-th" style="width:21%;">No. of DL/OD/Field Work</th>
+      <th class="att-th" style="width:21%;">Leave other than CL/DL/OD</th>
+    </tr>
+    <tr style="height:40px;">
+      <td class="att-td" style="text-align:left;padding-left:5px;">${esc(r('a_month'))}</td>
+      <td class="att-td">${esc(r('a_wd'))}</td>
+      <td class="att-td">${esc(r('a_present'))}</td>
+      <td class="att-td">${esc(r('a_cl'))}</td>
+      <td class="att-td">${esc(r('a_dl'))}</td>
+      <td class="att-td">${esc(r('a_ot'))}</td>
+    </tr>
+    <tr class="summary-row">
+      <td colspan="3">Total No. of CL in the year: <b>${esc(r('a_tcl'))}</b></td>
+      <td colspan="3">No. of CL at Credit: <b>${esc(r('a_clbal'))}</b></td>
+    </tr>
+    <tr class="summary-row">
+      <td colspan="3">Total No. of DL/OD/FW in the year: <b>${esc(r('a_tdly'))}</b></td>
+      <td colspan="3">Total No. of DL/OD/FW availed till date: <b>${esc(r('a_tdll'))}</b></td>
+    </tr>
+    <tr>
+      <td colspan="6"><span style="font-style:italic">*Remarks </span>${esc(r('a_rem'))}</td>
+    </tr>
+  </table>
+  <div style="font-size:11px;font-style:italic;margin-bottom:8px;">*Details of Maternity /Paternity/Intermittent Break/Academic Leave etc.</div>
+
+  <table>
+    <tr><td style="font-weight:bold;padding:5px 7px;"><b>Details of research paper publications/books/chapters in edited book</b> <span style="font-style:italic;font-weight:normal;">(Enclose Copy)</span></td></tr>
+    <tr><td class="cell-val" style="height:80px;">${esc(getAT('pub'))}</td></tr>
+  </table>
+  <br>
+  <table>
+    <tr><td style="font-weight:bold;padding:5px 7px;"><b>Details of participation/presentations in Workshop/Seminar/Invited talk</b> <span style="font-style:italic;font-weight:normal;">(Enclose Copy)</span></td></tr>
+    <tr><td class="cell-val" style="height:170px;">${esc(getAT('ws'))}</td></tr>
+  </table>
+  <br>
+  <table>
+    <tr><td style="font-weight:bold;padding:5px 7px;"><b>Assistance in Academic Work/Tutorials/Laboratory/Library etc.</b></td></tr>
+    <tr><td class="cell-val" style="height:80px;">${esc(getAT('ac'))}</td></tr>
+  </table>
+  <br>
+  <table>
+    <tr><td style="font-weight:bold;padding:5px 7px;"><b>Brief description of research work carried out during the period</b> <span style="font-style:italic;font-weight:normal;">(Separate sheet may be attached if provided space is insufficient)</span></td></tr>
+    <tr><td class="cell-val" style="height:80px;">${esc(r('m_research')).replace(/\n/g,'<br>')}</td></tr>
+  </table>
+  <br>
+  <table>
+    <tr><td style="font-weight:bold;padding:5px 7px;"><b>Comments of supervisor regarding the progress of research work</b></td></tr>
+    <tr><td class="cell-val" style="height:80px;">${esc(r('m_sup')).replace(/\n/g,'<br>')}</td></tr>
+  </table>
+
+  <div class="sig-row">
+    <div class="sig-block" style="text-align:left;">
+      <br><br><br><br><br><br><br>
+      Research Scholar<br>
+      Date:
+      <br><br><br><br><br><br><br><br><br><br>
+    </div>
+    <div class="sig-block"><br><br><br><br><br><br><br>Supervisor</div>
+    <div class="sig-block"><br><br><br><br><br><br><br>Head of Department</div>
+    <div class="sig-block"><br><br><br><br><br><br><br>Principal</div>
+  </div>
+
+  <div class="office-header">For Office Use</div>
+  <table>
+    <tr>
+      <th class="att-th"></th>
+      <th class="att-th">Fellowship</th>
+      <th class="att-th">HRA</th>
+      <th class="att-th">Contingency</th>
+      <th class="att-th">Escort/Reader</th>
+      <th class="att-th">Uploaded by</th>
+    </tr>
+    <tr><td style="font-weight:bold;">Marked on (Date)</td><td class="att-td"></td><td class="att-td"></td><td class="att-td"></td><td class="att-td"></td><td class="att-td"></td></tr>
+    <tr><td style="font-weight:bold;">Checked on (Date)</td><td class="att-td"></td><td class="att-td"></td><td class="att-td"></td><td class="att-td"></td><td class="att-td"></td></tr>
+    <tr><td style="font-weight:bold;">Remarks</td><td colspan="5"></td></tr>
+  </table>
+</div>
+</body></html>`;
+  const b=new Blob([html],{type:'text/html'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');
+  a.href=u;
+  a.download='JRF_'+(gv('m_month')||'Report')+'_'+(gv('m_year')||'')+'.html';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(u)},100);
+  toast('✅ Downloaded! Open file → Ctrl+P → Save as PDF')
+}
+</script>
+</body>
+</html>
