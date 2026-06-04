@@ -723,18 +723,13 @@ async function compileReport(){
     if(d.ws)for(let i=0;i<d.ws.length;i++){const x=d.ws[i].d||{};workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})}
     if(d.pub)for(let i=0;i<d.pub.length;i++){const x=d.pub[i].d||{};pubs.push({title:x.title||x.chapter||'',issn:x.issn||x.isbn||'',journal:x.journal||x.book||x.publisher||''})}
     cl+=fN(d.a_cl);dl+=fN(d.a_dl);ot+=fN(d.a_ot);
-    const clD=leaveDatesV2(d,'cl');for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
-    const dlD=leaveDatesV2(d,'dl');for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
+    const clD=getLeaves(d,'cl');for(let i=0;i<clD.length;i++)clArr.push(clD[i]);
+    const dlD=getLeaves(d,'dl');for(let i=0;i<dlD.length;i++)dlArr.push(dlD[i]);
   }
 
   const wd=fN(gv('r_workdays'));
-  const clStr=fmtLeaveDates(clArr), dlStr=fmtLeaveDates(dlArr);
+  const clStr=formatLeaves(clArr), dlStr=formatLeaves(dlArr);
   COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops,pubs,wd,cl,dl,ot,clAll:clStr,dlAll:dlStr};
-
-  let dbg='';
-  if(inRange.length){
-    dbg='<div style="background:#fffbe6;border:1px solid #f0c040;border-radius:6px;padding:8px;margin-top:8px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all">DEBUG clArr='+JSON.stringify(clArr)+'</div>';
-  }
 
   document.getElementById('reportPreview').innerHTML=
     '<p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled '+inRange.length+' monthly report(s) for '+gv('r_from')+' to '+gv('r_to')+'</p>'+
@@ -742,7 +737,6 @@ async function compileReport(){
     '<p>📅 <b>Working Days (entered):</b> '+dsp(wd)+' &nbsp; <b>CL:</b> '+dsp(cl)+' &nbsp; <b>DL/FW:</b> '+dsp(dl)+' &nbsp; <b>Other:</b> '+dsp(ot)+'</p>'+
     '<p style="margin-top:6px;color:#444;font-size:12px"><b>CL dates:</b> '+(clStr||'—')+'</p>'+
     '<p style="color:#444;font-size:12px"><b>DL dates:</b> '+(dlStr||'—')+'</p>'+
-    dbg+
     '<p style="margin-top:10px;color:#27ae60;font-weight:bold">✅ Ready. Click "Print / PDF" to generate the report.</p>';
   toast('✅ Compiled '+inRange.length+' month(s)')
 }
