@@ -170,6 +170,20 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
           <div class="fp"><label>Expected End Date</label><input id="p_endDate" placeholder="24.05.2030"></div>
           <div class="fp" style="grid-column:span 2"><label>Places Visited (one per line)</label><textarea id="p_places" rows="3" placeholder="IIMK Library, Kozhikode"></textarea></div>
         </div>
+        <div class="dv"></div>
+        <h3 style="font-size:14px;margin-bottom:10px">6-Month Report Details (Research Progress Report)</h3>
+        <div class="ib">Used for the <b>Research Progress Report</b> format. Objectives: type one per line.</div>
+        <div class="fg">
+          <div class="fp"><label>Mode of Research</label><input id="p_mode" placeholder="Full time"></div>
+          <div class="fp"><label>Date of RAC</label><input id="p_rac" placeholder="06-06-2024"></div>
+          <div class="fp"><label>Registration Orders No.</label><input id="p_regOrder" placeholder="13584/2024/Admn"></div>
+          <div class="fp"><label>Funding Agency</label><input id="p_fundAgency" placeholder="Junior Research Fellowship (JRF) - UGC"></div>
+          <div class="fp"><label>Place of Research</label><input id="p_placeResearch" placeholder="Department of Commerce and Management Studies"></div>
+          <div class="fp"><label>Centre of Research</label><input id="p_centre" placeholder="PSMO College, Tirurangadi"></div>
+          <div class="fp" style="grid-column:span 2"><label>Supervisor Name &amp; Designation</label><textarea id="p_supDesig" rows="2" placeholder="Dr. Abbas Vattoli, Research Supervisor & Associate Professor, Department of Commerce, Amal College of Advanced Studies (Autonomous) Nilambur"></textarea></div>
+          <div class="fp" style="grid-column:span 2"><label>Approved Objectives (one per line)</label><textarea id="p_approvedObj" rows="4" placeholder="To identify and analyze the key factors influencing apartment purchase decision in Kerala."></textarea></div>
+          <div class="fp" style="grid-column:span 2"><label>Revised Objectives (one per line)</label><textarea id="p_revisedObj" rows="4" placeholder="To conceptualize Residential Well-Being (RWB) as a multidimensional construct."></textarea></div>
+        </div>
         <div class="br"><button class="btn btn-p" onclick="saveProfile()">💾 Save Profile</button></div>
       </div>
     </div>
@@ -282,7 +296,9 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
         <h3>📑 Annual / 6-Month Progress Report</h3>
         <div class="ib">Auto-compiles from monthly reports. Annual period runs <b>25 May to 24 May</b>.</div>
         <div class="br" style="margin-top:0;margin-bottom:12px">
-          <button class="btn btn-i" onclick="setAnnualPeriod()">📅 Set Annual Period (25 May – 24 May)</button>
+          <button class="btn btn-i" onclick="setAnnualPeriod()">📅 Annual (25 May – 24 May)</button>
+          <button class="btn btn-s" onclick="set6Month(1)">📅 Jan – Jun</button>
+          <button class="btn btn-s" onclick="set6Month(2)">📅 Jul – Dec</button>
         </div>
         <div class="fg">
           <div class="fp"><label>Period From</label><input id="r_from" placeholder="25-MAY-2025"></div>
@@ -291,7 +307,7 @@ body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
             <select id="r_type"><option value="annual">Annual</option><option value="sixmonth">Six-Month</option></select>
           </div>
           <div class="fp"><label>Format</label>
-            <select id="r_format"><option value="annexure">Annexure VI</option><option value="detailed">Detailed-account</option></select>
+            <select id="r_format"><option value="annexure">Annexure VI</option><option value="detailed">Detailed-account</option><option value="progress">Research Progress Report (6-Month)</option></select>
           </div>
           <div class="fp"><label>Total Working Days (enter manually)</label><input id="r_workdays" type="number" placeholder="267"></div>
           <div class="fp"><label>Reviews — Articles count</label><input id="r_articles" placeholder="90"></div>
@@ -332,7 +348,7 @@ function initSB(){
   if(window.supabase&&window.supabase.createClient){
     SB=window.supabase.createClient(
       'https://sxnsbpbaivuyjqbsjpuj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4bnNicGJhaXZ1eWpxYnNqcHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MTI5NjUsImV4cCI6MjA5NjA4ODk2NX0.MIuYs3VU7__k7An0iiIH2Td6Yg4aRX3spLplj0zDUj4'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4bnNicGJhaXZ1eWpxYnNqcHVqIiwicm9sZSI6ImФub24iLCJpYXQiOjE3ODA1MTI5NjUsImV4cCI6MjA5NjA4ODk2NX0.MIuYs3VU7__k7An0iiIH2Td6Yg4aRX3spLplj0zDUj4'.replace('Ф','a')
     );
     var s=document.getElementById('sbStatus');
     if(s){s.textContent='✅ Connected';s.style.color='#27ae60'}
@@ -412,7 +428,7 @@ function showTab(t){
 }
 
 // ===== PROFILE =====
-var PK=['name','id','supervisor','dept','regdate','scheme','fellowFrom','fellowTo','fellowship','hra','contingency','escort','clUsed','dlUsed','dlLifetime','awardNo','awardDate','topic','commenceUni','commenceFel','endDate','places'];
+var PK=['name','id','supervisor','dept','regdate','scheme','fellowFrom','fellowTo','fellowship','hra','contingency','escort','clUsed','dlUsed','dlLifetime','awardNo','awardDate','topic','commenceUni','commenceFel','endDate','places','mode','rac','regOrder','fundAgency','placeResearch','centre','supDesig','approvedObj','revisedObj'];
 function loadProf(){PK.forEach(function(k){var e=document.getElementById('p_'+k);if(e&&CP[k]!==undefined)e.value=CP[k]})}
 async function saveProfile(){
   var d={};PK.forEach(function(k){d[k]=gv('p_'+k)});
@@ -674,6 +690,17 @@ function setAnnualPeriod(){
   sv('r_to','24-MAY-'+startYear);
   toast('📅 Period: 25-MAY-'+(startYear-1)+' to 24-MAY-'+startYear)
 }
+function set6Month(half){
+  var y=parseInt(gv('m_year'))||new Date().getFullYear();
+  if(half===1){sv('r_from','01-JAN-'+y);sv('r_to','30-JUN-'+y);toast('📅 Period: 01-JAN-'+y+' to 30-JUN-'+y)}
+  else{sv('r_from','01-JUL-'+y);sv('r_to','31-DEC-'+y);toast('📅 Period: 01-JUL-'+y+' to 31-DEC-'+y)}
+  sv('r_type','sixmonth');sv('r_format','progress')
+}
+function ord(n){var v=n%100;if(v>=11&&v<=13)return n+'th';switch(n%10){case 1:return n+'st';case 2:return n+'nd';case 3:return n+'rd';default:return n+'th'}}
+function prettyDMY(s){var d=parseDMY(s);if(!d)return esc(s);return ord(d.getDate())+' '+MN[d.getMonth()]+' '+d.getFullYear()}
+function dayAfter(s){var d=parseDMY(s);if(!d)return '';var n=new Date(d.getTime()+86400000);return (n.getDate()<10?'0':'')+n.getDate()+'-'+MS[n.getMonth()]+'-'+n.getFullYear()}
+function liList(text){var arr=String(text||'').split('\n').filter(function(s){return s.trim()});var h='';for(var i=0;i<arr.length;i++)h+='<li style="margin:3px 0">'+esc(arr[i].trim())+'</li>';return h}
+function prRow(l,v){return '<tr><td style="border:none;width:42%;vertical-align:top;padding:1px 0">'+esc(l)+'</td><td style="border:none;vertical-align:top;padding:1px 0">: <b>'+esc(v)+'</b></td></tr>'}
 function parseDMY(s){
   if(!s)return null;s=s.trim();
   var mm={JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
@@ -705,17 +732,25 @@ async function compileReport(){
     inRange.sort(function(a,b){return (MN.indexOf(a.mon)+parseInt(a.yr)*12)-(MN.indexOf(b.mon)+parseInt(b.yr)*12)});
 
     var workshops=[],pubs=[],cl=0,dl=0,ot=0,clArr=[],dlArr=[];
+    var skillProgs=[],seminars=[],pubList=[],paperPres=[];
     for(var j=0;j<inRange.length;j++){
       var dd=inRange[j];
-      if(dd.ws)for(var w=0;w<dd.ws.length;w++){var x=dd.ws[w].d||{};workshops.push({topic:x.topic||x.title||'',date:x.date||'',inst:x.org||''})}
-      if(dd.pub)for(var pp=0;pp<dd.pub.length;pp++){var y=dd.pub[pp].d||{};pubs.push({title:y.title||y.chapter||'',issn:y.issn||y.isbn||'',journal:y.journal||y.book||y.publisher||''})}
+      if(dd.ws)for(var w=0;w<dd.ws.length;w++){
+        var wt=dd.ws[w].t,x=dd.ws[w].d||{};
+        var wItem=x.topic||x.title||'',wDate=x.date||'',wInst=x.org||'';
+        workshops.push({topic:wItem,date:wDate,inst:wInst});
+        if(wt==='Workshop'||wt==='FDP')skillProgs.push({item:wItem,date:wDate,inst:wInst});
+        else seminars.push({item:wItem,date:wDate,inst:wInst});
+        if(wt==='Conference'&&x.paper&&x.paper!=='NIL')paperPres.push('The paper on "'+x.paper+'" is presented in '+(x.title||'')+(x.org?' conducted by '+x.org:'')+'.');
+      }
+      if(dd.pub)for(var pp=0;pp<dd.pub.length;pp++){var y=dd.pub[pp].d||{};pubs.push({title:y.title||y.chapter||'',issn:y.issn||y.isbn||'',journal:y.journal||y.book||y.publisher||''});pubList.push(gs(dd.pub[pp].t,y))}
       cl+=fN(dd.a_cl);dl+=fN(dd.a_dl);ot+=fN(dd.a_ot);
       var clD=getLeaves(dd,'cl');for(var a=0;a<clD.length;a++)clArr.push(clD[a]);
       var dlD=getLeaves(dd,'dl');for(var b=0;b<dlD.length;b++)dlArr.push(dlD[b]);
     }
     var wd=fN(gv('r_workdays'));
     var clStr=formatLeaves(clArr),dlStr=formatLeaves(dlArr);
-    COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops:workshops,pubs:pubs,wd:wd,cl:cl,dl:dl,ot:ot,clAll:clStr,dlAll:dlStr};
+    COMPILED={from:gv('r_from'),to:gv('r_to'),months:inRange.length,workshops:workshops,pubs:pubs,wd:wd,cl:cl,dl:dl,ot:ot,clAll:clStr,dlAll:dlStr,skillProgs:skillProgs,seminars:seminars,pubList:pubList,paperPres:paperPres};
 
     document.getElementById('reportPreview').innerHTML=
       '<p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">Compiled '+inRange.length+' monthly report(s) for '+gv('r_from')+' to '+gv('r_to')+'</p>'+
@@ -778,6 +813,57 @@ function printAnnual(){
       '<p style="margin:8px 0 0">11. A detailed account of the work done during the period (a separate sheet may be attached for the purpose):</p>'+
       '<p style="margin:2px 0 0">12. Comments of the supervisor on the progress of the research work during the period under report:</p>'+
       '<div style="display:flex;justify-content:space-between;margin-top:120px;font-weight:bold;font-size:11px"><div>Signature of Awardee</div><div>Head of Department</div><div>Registrar/Principal/Director</div></div>';
+    }else if(fmt==='progress'){
+      var spR='';for(var i=0;i<c.skillProgs.length;i++){var sp=c.skillProgs[i];spR+='<tr><td class="atd">'+(i+1)+'</td><td>'+esc(sp.item)+'</td><td class="atd">'+esc(sp.date)+'</td><td>'+esc(sp.inst)+'</td></tr>'}
+      var smR='';for(var k=0;k<c.seminars.length;k++){var sm=c.seminars[k];smR+='<tr><td class="atd">'+(k+1)+'</td><td>'+esc(sm.item)+'</td><td class="atd">'+esc(sm.date)+'</td><td>'+esc(sm.inst)+'</td></tr>'}
+      var pubLi='';for(var q=0;q<c.pubList.length;q++)pubLi+='<li style="margin:4px 0">'+esc(c.pubList[q])+'</li>';
+      var papLi='';for(var z=0;z<c.paperPres.length;z++)papLi+='<li style="margin:4px 0">'+esc(c.paperPres[z])+'</li>';
+      var apObj=liList(p.approvedObj),rvObj=liList(p.revisedObj),remFrom=dayAfter(c.to);
+      body=
+      '<div class="ct" style="font-weight:bold;font-size:16px;margin-bottom:4px">Research Progress Report</div>'+
+      '<div class="ct" style="font-size:12px;margin-bottom:16px">(For the period '+prettyDMY(c.from)+' &ndash; '+prettyDMY(c.to)+')</div>'+
+      '<div class="ct" style="font-weight:bold">Submitted by</div>'+
+      '<div class="ct">'+esc(p.name)+'</div>'+
+      '<div class="ct">Research Scholar</div>'+
+      '<div class="ct">'+esc(p.dept||'Department of Commerce and Management Studies')+'</div>'+
+      '<div class="ct" style="margin-bottom:16px">PSMO College (Autonomous) Tirurangadi</div>'+
+      '<div class="ct" style="font-weight:bold">'+esc(p.dept||'Department of Commerce and Management Studies')+',</div>'+
+      '<div class="ct" style="font-weight:bold;margin-bottom:14px">PSMO College (Autonomous), Tirurangadi 676306</div>'+
+      '<table style="border:none;font-size:12px;margin-bottom:6px">'+
+      prRow('Name of research scholar',p.name)+
+      prRow('Mode of research',p.mode||'Full time')+
+      prRow('Research Topic',p.topic)+
+      prRow('Date of RAC',p.rac)+
+      prRow('Registration orders No',p.regOrder)+
+      prRow('Name and designation of supervising teacher',p.supDesig||p.supervisor)+
+      prRow('Place of research',p.placeResearch)+
+      prRow('Centre of Research',p.centre)+
+      '</table>'+
+      '<div class="ct" style="font-weight:bold;text-decoration:underline;margin:12px 0 6px">RESEARCH PROGRESS REPORT</div>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:10px 0 4px">1. APPROVED OBJECTIVES OF RESEARCH TOPIC</p>'+
+      '<ul style="margin:0 0 8px 24px">'+(apObj||'<li>&mdash;</li>')+'</ul>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:8px 0 4px">Revised Objectives</p>'+
+      '<ul style="margin:0 0 10px 24px">'+(rvObj||'<li>&mdash;</li>')+'</ul>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:12px 0 4px">2. ATTENDANCE</p>'+
+      '<p style="margin:0 0 4px">Consolidated attendance during the period</p>'+
+      '<table><tr><th class="ath">Total no of working days</th><th class="ath">Total attendance</th><th class="ath">Casual leave</th><th class="ath">Duty leave</th><th class="ath">Medical leave</th></tr>'+
+      '<tr><td class="atd">'+dsp(wdM)+'</td><td class="atd">'+dsp(pres)+'</td><td class="atd">'+dsp(c.cl)+'</td><td class="atd">'+dsp(c.dl)+'</td><td class="atd">'+(fN(c.ot)>0?dsp(c.ot):'NIL')+'</td></tr></table>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:14px 0 4px">3. RESEARCH SKILL ENHANCEMENT PROGRAMMES</p>'+
+      '<table><tr><th class="ath" style="width:7%">SL No</th><th class="ath">Item</th><th class="ath" style="width:22%">Date</th><th class="ath" style="width:26%">Name of the Institution</th></tr>'+(spR||'<tr><td class="atd" colspan="4">NIL</td></tr>')+'</table>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:14px 0 4px">4. SEMINARS / WEBINARS AND CONFERENCE ATTENDED</p>'+
+      '<table><tr><th class="ath" style="width:7%">SL No</th><th class="ath">Item</th><th class="ath" style="width:22%">Date</th><th class="ath" style="width:26%">Name of the Institution</th></tr>'+(smR||'<tr><td class="atd" colspan="4">NIL</td></tr>')+'</table>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:14px 0 4px">5. PUBLICATIONS</p>'+
+      '<ul style="margin:0 0 8px 24px">'+(pubLi||'<li>NIL</li>')+'</ul>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:14px 0 4px">6. PAPER PRESENTATION</p>'+
+      '<ul style="margin:0 0 8px 24px">'+(papLi||'<li>NIL</li>')+'</ul>'+
+      '<p style="font-weight:bold;text-decoration:underline;margin:14px 0 4px">7. FELLOWSHIP DETAILS</p>'+
+      '<table><tr><th class="ath">Funding Agency</th><th class="ath">Period Availed</th><th class="ath">Period Remaining</th></tr>'+
+      '<tr><td class="atd">'+esc(p.fundAgency||'Junior Research Fellowship (JRF) - UGC')+'</td><td class="atd">'+esc(c.from)+' To '+esc(c.to)+'</td><td class="atd">'+(remFrom?esc(remFrom)+' To '+esc(p.fellowTo):esc(p.fellowTo))+'</td></tr></table>'+
+      '<div style="display:flex;justify-content:space-between;margin-top:70px;font-weight:bold;font-size:11px;text-align:center">'+
+      '<div>Name<br>Signature<br>Date<br><br>Candidate</div>'+
+      '<div>Name<br>Signature<br>Date<br><br>Guide/Supervisor</div>'+
+      '<div>Name<br>Signature<br>Date<br><br>Head of the Department</div>'+
+      '<div>Name<br>Signature<br>Date<br><br>Principal</div></div>';
     }else{
       var wsR='';for(var i=0;i<c.workshops.length;i++){var w=c.workshops[i];wsR+='<tr><td class="atd">'+(i+1)+'</td><td>'+esc(w.topic)+'</td><td class="atd">'+esc(w.date)+'</td><td>'+esc(w.inst)+'</td></tr>'}
       var pbR='';for(var k=0;k<c.pubs.length;k++){var pb=c.pubs[k];pbR+='<tr><td class="atd">'+(k+1)+'</td><td><b>'+esc(pb.title)+'</b></td><td class="atd">'+esc(pb.issn)+'</td><td>'+esc(pb.journal)+'</td></tr>'}
@@ -810,7 +896,8 @@ function printAnnual(){
       '.atd{text-align:center}'+
       '@page{size:A4;margin:10mm}'+
       '</style></head><body>'+body+'</body></html>';
-    downloadHTML(html,(gv('r_type')==='annual'?'Annual':'SixMonth')+'_'+(fmt==='annexure'?'AnnexureVI':'Detailed')+'_'+gv('r_from')+'.html');
+    var fLbl=fmt==='annexure'?'AnnexureVI':(fmt==='progress'?'ResearchProgressReport':'Detailed');
+    downloadHTML(html,fLbl+'_'+gv('r_from')+'.html');
     toast('✅ Downloaded! Open file → Ctrl+P → Save as PDF')
   }catch(e){toast('❌ Print error: '+e.message,'#e74c3c')}
 }
